@@ -1,0 +1,5 @@
+.DS_Store
+Thumbs.db
+*.csv
+.vscode/
+build/

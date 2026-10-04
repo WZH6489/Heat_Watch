@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Room HeatWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:wght@400;600;800&display=swap">
+<style>
+/* Layout: status first (big, plain-language), then live numbers, then history + caregiver tools, then reference. Large type for older eyes. */
+:root{
+  --bg:#edf1f4; --surface:#fbfcfd; --ink:#13202a; --muted:#586a77; --line:#d3dce3;
+  --accent:#1d5c86; --accent-tint:#dbe8f2;
+  --ok:#23704a; --ok-tint:#dcefe4; --cau:#8a5b00; --cau-tint:#f8ecc9;
+  --warn:#b0430c; --warn-tint:#fbe0cf; --dan:#b3201c; --dan-tint:#f9d7d4;
+  --off:#4b5563; --off-tint:#e1e5ea;
+  --f-body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-data:"Atkinson Hyperlegible Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f161c; --surface:#16212a; --ink:#e6edf2; --muted:#93a4b1; --line:#263642;
+  --accent:#6fb0dc; --accent-tint:#1b3242;
+  --ok:#5cc58c; --ok-tint:#123325; --cau:#e3b54a; --cau-tint:#372c10;
+  --warn:#f08a4b; --warn-tint:#3e210e; --dan:#ff6b63; --dan-tint:#441715;
+  --off:#aab4bf; --off-tint:#232c34; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161c; --surface:#16212a; --ink:#e6edf2; --muted:#93a4b1; --line:#263642;
+  --accent:#6fb0dc; --accent-tint:#1b3242;
+  --ok:#5cc58c; --ok-tint:#123325; --cau:#e3b54a; --cau-tint:#372c10;
+  --warn:#f08a4b; --warn-tint:#3e210e; --dan:#ff6b63; --dan-tint:#441715;
+  --off:#aab4bf; --off-tint:#232c34; color-scheme:dark}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:20px 40px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{margin:0;text-wrap:balance;line-height:1.15}
+h3{font-size:1.05rem;font-weight:800}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center}
+.brand svg{flex:none}
+.brand h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em}
+.brand p{margin:0;color:var(--muted);font-size:.95rem}
+.conn{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font-size:.85rem;font-weight:600;padding:5px 10px;border-radius:999px;background:var(--accent-tint);color:var(--accent);white-space:nowrap}
+.chip[data-mode="serial"]{background:var(--ok-tint);color:var(--ok)}
+.chip[data-mode="idle"]{background:var(--off-tint);color:var(--off)}
+.btn{font:inherit;font-size:.95rem;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 14px;cursor:pointer;min-height:44px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.btn:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+select,input[type=number]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:44px}
+input[type=number]{width:5.5em;font-family:var(--f-data)}
+.note{margin:0;padding:12px 14px;border-radius:var(--r);background:var(--cau-tint);color:var(--ink);font-size:.95rem}
+
+/* status */
+.status{--lv:var(--ok);--lvt:var(--ok-tint);background:var(--lvt);border-radius:14px;padding:22px 22px 18px;display:grid;gap:16px}
+.status[data-level="1"]{--lv:var(--cau);--lvt:var(--cau-tint)}
+.status[data-level="2"]{--lv:var(--warn);--lvt:var(--warn-tint)}
+.status[data-level="3"]{--lv:var(--dan);--lvt:var(--dan-tint)}
+.status[data-level="off"]{--lv:var(--off);--lvt:var(--off-tint)}
+.status-row{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-start}
+.status-main{min-width:0;flex:1 1 420px}
+.status h2{font-size:clamp(2rem,6vw,3.1rem);font-weight:800;color:var(--lv);letter-spacing:-.02em}
+.status p{margin:6px 0 0;font-size:1.12rem;max-width:62ch}
+.status-side{display:flex;flex-wrap:wrap;gap:8px}
+.ladder{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.rung{padding:8px 10px;border-radius:6px;background:color-mix(in srgb,var(--surface) 55%,transparent);border:2px solid transparent;min-width:0}
+.rung b{display:block;font-size:.9rem}
+.rung span{font-size:.8rem;color:var(--muted)}
+.rung.on{border-color:var(--lv);background:var(--surface)}
+.rung.on b{color:var(--lv)}
+.status[data-level="3"] .rung.on{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--dan) 25%,transparent)}}
+@media (prefers-reduced-motion:reduce){.status[data-level="3"] .rung.on{animation:none}}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .big{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:2.3rem;font-weight:600;line-height:1.1;letter-spacing:-.02em}
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--off);margin-right:7px;vertical-align:1px}
+.live.on{background:var(--ok)}
+.live.blip{animation:blip .6s ease-out}
+@keyframes blip{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 70%,transparent)}100%{box-shadow:0 0 0 9px transparent}}
+.big.blip{animation:numblip .5s ease-out}
+@keyframes numblip{0%{color:var(--accent)}100%{color:var(--ink)}}
+@media (prefers-reduced-motion:reduce){.live.blip,.big.blip{animation:none}}
+.c-pt{fill:var(--accent)}
+.tile .sub{font-size:.88rem;color:var(--muted)}
+.tile .flag{font-size:.88rem;font-weight:600}
+
+/* main grid */
+.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.panel-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.88rem;font-weight:600;padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer;min-height:36px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.85rem;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--accent);vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top:2px dashed var(--ink)}
+#chart{width:100%;min-height:240px}
+#chart svg{display:block;width:100%;height:auto}
+.c-grid{stroke:var(--line);stroke-width:1}
+.c-axis{fill:var(--muted);font-family:var(--f-data);font-size:11px}
+.c-b1{fill:var(--cau-tint)} .c-b2{fill:var(--warn-tint)} .c-b3{fill:var(--dan-tint)}
+.c-th{stroke-width:1;stroke-dasharray:3 4}
+.c-th1{stroke:var(--cau)} .c-th2{stroke:var(--warn)} .c-th3{stroke:var(--dan)}
+.c-thl{font-family:var(--f-data);font-size:11px;font-weight:600}
+.c-thl1{fill:var(--cau)} .c-thl2{fill:var(--warn)} .c-thl3{fill:var(--dan)}
+.c-area{fill:var(--accent);fill-opacity:.12;stroke:none}
+.c-line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.c-feel{fill:none;stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 4;opacity:.7}
+.c-dot{fill:var(--accent);stroke:var(--surface);stroke-width:2.5}
+.c-empty{fill:var(--muted);font-size:14px}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:.95rem}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right;font-family:var(--f-data);font-variant-numeric:tabular-nums;min-width:0}
+.pill{display:inline-block;font-size:.8rem;font-weight:600;padding:3px 9px;border-radius:999px;font-family:var(--f-body)}
+.pill.ok{background:var(--ok-tint);color:var(--ok)} .pill.bad{background:var(--dan-tint);color:var(--dan)} .pill.idle{background:var(--off-tint);color:var(--off)}
+.pill.l0{background:var(--ok-tint);color:var(--ok)} .pill.l1{background:var(--cau-tint);color:var(--cau)} .pill.l2{background:var(--warn-tint);color:var(--warn)} .pill.l3{background:var(--dan-tint);color:var(--dan)}
+pre#raw{margin:0;padding:10px;border-radius:8px;background:var(--bg);font-family:var(--f-data);font-size:.78rem;line-height:1.45;overflow-x:auto;white-space:pre;color:var(--muted);min-height:6.5em}
+.due{font-size:1.25rem;font-weight:800}
+.due.over{color:var(--dan)}
+.checks{margin:0;padding:0;list-style:none;font-size:.88rem;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
+.stat{padding:4px 14px;border-left:1px solid var(--line);min-width:0}
+.stat:first-child{border-left:0;padding-left:0}
+.stat .v{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:1.35rem;font-weight:600}
+.stat .k{font-size:.82rem;color:var(--muted)}
+
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:340px;overflow-y:auto}
+.alerts li{display:grid;grid-template-columns:4.6em auto 1fr;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);font-size:.93rem}
+.alerts li:first-child{border-top:0}
+.alerts time{font-family:var(--f-data);font-size:.82rem;color:var(--muted)}
+.alerts .txt{min-width:0}
+.signs h4{margin:0 0 4px;font-size:.98rem}
+.signs ul{margin:0 0 10px;padding-left:1.2em;font-size:.95rem}
+.signs .em{background:var(--dan-tint);border-radius:8px;padding:10px 12px}
+.signs .em h4{color:var(--dan)}
+.signs .em ul{margin-bottom:6px}
+.signs p{margin:0;font-size:.95rem}
+
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 20px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.field label{font-weight:600}
+.field .hint{font-size:.8rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+footer{font-size:.85rem;color:var(--muted);max-width:80ch}
+footer p{margin:0 0 6px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:.92rem;max-width:calc(100% - 32px)}
+
+@media (max-width:960px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:12px}
+  .stat:nth-child(4){border-left:0;padding-left:0}
+}
+@media (max-width:720px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .ladder{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:460px){
+  .wrap{padding-inline:16px}
+  .tile .big{font-size:1.9rem}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(odd){border-left:0;padding-left:0}
+  .stat:nth-child(4){border-left:1px solid var(--line);padding-left:14px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--accent-tint)"/><path d="M17 9a3 3 0 0 1 6 0v13.2a6 6 0 1 1-6 0Z" fill="none" stroke="var(--accent)" stroke-width="2.4"/><circle cx="20" cy="27" r="3" fill="var(--accent)"/><path d="M20 26V15" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <div><h1>HeatWatch</h1><p>Indoor heat safety for older adults</p></div>
+    </div>
+    <div class="conn">
+      <span id="src" class="chip" data-mode="demo">Demo data</span>
+      <label for="baud" class="sr">Baud rate</label>
+      <select id="baud"><option value="9600">9600 baud</option><option value="115200">115200 baud</option></select>
+      <button id="btnConnect" class="btn primary" type="button">Connect Arduino</button>
+      <button id="btnDemo" class="btn" type="button">Restart demo</button>
+    </div>
+  </header>
+  <p id="connMsg" class="note" hidden></p>
+
+  <section id="status" class="status" data-level="0" aria-live="polite">
+    <div class="status-row">
+      <div class="status-main">
+        <div class="eyebrow">Room status</div>
+        <h2 id="levelName">Normal</h2>
+        <p id="levelAction">Waiting for readings.</p>
+      </div>
+      <div class="status-side">
+        <button id="btnSound" class="btn" type="button" aria-pressed="false">Turn on alarm sound</button>
+        <button id="btnAck" class="btn" type="button" hidden>Silence alarm</button>
+      </div>
+    </div>
+    <div class="ladder" id="ladder">
+      <div class="rung"><b>Normal</b><span id="r0"></span></div>
+      <div class="rung"><b>Caution</b><span id="r1"></span></div>
+      <div class="rung"><b>Warning</b><span id="r2"></span></div>
+      <div class="rung"><b>Danger</b><span id="r3"></span></div>
+    </div>
+  </section>
+
+  <section class="tiles" aria-label="Current readings">
+    <div class="tile"><span class="eyebrow"><span class="live" id="liveDot" aria-hidden="true"></span>Room temperature</span><span class="big" id="tTemp">--</span><span class="sub" id="tTempSub">No reading yet</span></div>
+    <div class="tile"><span class="eyebrow">Feels like</span><span class="big" id="tFeel">--</span><span class="sub" id="tFeelSub">Heat index from temperature and humidity</span></div>
+    <div class="tile"><span class="eyebrow">Humidity</span><span class="big" id="tHum">--</span><span class="sub" id="tHumSub">Comfortable range is 30–60%</span></div>
+    <div class="tile"><span class="eyebrow">Trend</span><span class="big" id="tTrend">--</span><span class="sub" id="tTrendSub">Change over the last 10 minutes</span></div>
+  </section>
+
+  <div class="main">
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Temperature history</h3>
+        <div class="seg" role="group" aria-label="Time range">
+          <button type="button" data-range="120000">Live</button>
+          <button type="button" data-range="1800000">30 min</button>
+          <button type="button" data-range="10800000" aria-pressed="true">3 hours</button>
+          <button type="button" data-range="86400000">24 hours</button>
+        </div>
+      </div>
+      <div class="legend"><span><i></i>Room temperature</span><span><i class="dash"></i>Feels like</span><span>Shading marks caution, warning and danger zones</span></div>
+      <div id="chart"></div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h3>Caregiver check-in</h3>
+        <div><div class="due" id="ckDue">Not needed</div><div class="muted" id="ckRule" style="font-size:.9rem"></div></div>
+        <button id="btnCheck" class="btn primary" type="button">I checked in just now</button>
+        <ul class="checks" id="ckList"></ul>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h3>Sensor</h3><span class="pill idle" id="senPill">Idle</span></div>
+        <dl class="kv">
+          <dt>Last reading</dt><dd id="senLast">--</dd>
+          <dt>Update rate</dt><dd id="senRate">--</dd>
+          <dt>Readings stored</dt><dd id="senCount">0</dd>
+          <dt>Sensor errors</dt><dd id="senErr">0</dd>
+          <dt>Unreadable lines</dt><dd id="senBad">0</dd>
+        </dl>
+        <div class="eyebrow">Serial monitor</div>
+        <pre id="raw" aria-label="Latest serial lines"></pre>
+      </section>
+    </aside>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h3>Last 24 hours</h3><span class="muted" style="font-size:.88rem">Averages use room temperature</span></div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="sA5">--</div><div class="k">Average, 5 min</div></div>
+      <div class="stat"><div class="v" id="sA60">--</div><div class="k">Average, 1 hour</div></div>
+      <div class="stat"><div class="v" id="sA24">--</div><div class="k">Average, 24 hours</div></div>
+      <div class="stat"><div class="v" id="sMM">--</div><div class="k">Low / high</div></div>
+      <div class="stat"><div class="v" id="sT1">--</div><div class="k" id="sT1k">Time at caution or above</div></div>
+      <div class="stat"><div class="v" id="sT3">--</div><div class="k" id="sT3k">Time in danger zone</div></div>
+    </div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <div class="panel-head"><h3>Alerts</h3><span class="muted" id="alCount" style="font-size:.88rem"></span></div>
+      <ul class="alerts" id="alerts"></ul>
+    </section>
+    <section class="panel signs">
+      <h3>Warning signs to watch for</h3>
+      <div>
+        <h4>Heat exhaustion: cool them down</h4>
+        <ul>
+          <li>Heavy sweating, pale or clammy skin</li>
+          <li>Dizziness, headache, nausea, weakness</li>
+          <li>Fast breathing or heartbeat, extreme thirst, dark urine</li>
+        </ul>
+        <p class="muted">Move to a cooler spot, give water, apply cool wet cloths, and rest. In BC, call 8-1-1 for nurse advice.</p>
+      </div>
+      <div class="em">
+        <h4>Heat stroke: call 911</h4>
+        <ul>
+          <li>Confusion, slurred speech, fainting or not making sense</li>
+          <li>Very hot skin, or sweating has stopped</li>
+          <li>Loss of coordination or seizure</li>
+        </ul>
+        <p>While waiting, move them somewhere cool and cool the body with water, wet towels or ice packs on the neck, armpits and groin.</p>
+      </div>
+      <p class="muted">Older adults often feel less thirsty and may take medicines that raise heat risk. Offer water regularly even if they say they are fine.</p>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h3>Settings and data</h3>
+    <div class="settings">
+      <div class="field"><label for="unit">Display unit</label><select id="unit"><option value="C">Celsius (°C)</option><option value="F">Fahrenheit (°F)</option></select></div>
+      <div class="field"><label for="thC">Caution at (°C)</label><input id="thC" type="number" step="0.5" min="20" max="40"><span class="hint">BC health guidance: keep homes below 26 °C</span></div>
+      <div class="field"><label for="thW">Warning at (°C)</label><input id="thW" type="number" step="0.5" min="20" max="45"></div>
+      <div class="field"><label for="thD">Danger at (°C)</label><input id="thD" type="number" step="0.5" min="20" max="50"><span class="hint">Above 31 °C indoors is dangerous for people at risk</span></div>
+      <div class="field"><label for="stale">Sensor offline after (seconds)</label><input id="stale" type="number" step="1" min="5" max="300"></div>
+      <div class="field"><label>Browser notifications</label><button id="btnNotify" class="btn" type="button">Allow notifications</button><span class="hint" id="notifyHint">Pop-up alerts when the level rises</span></div>
+    </div>
+    <div class="row">
+      <button id="btnCopy" class="btn" type="button">Copy data as CSV</button>
+      <button id="btnDl" class="btn" type="button">Download CSV</button>
+      <span id="clearWrap" class="row"><button id="btnClear" class="btn" type="button">Clear stored readings</button></span>
+    </div>
+  </section>
+
+  <footer>
+    <p>Levels use the higher of room temperature and feels-like temperature, averaged over the last minute. A level only drops once readings fall 1 °C below its threshold, so alerts don't flicker on and off.</p>
+    <p>The DHT11 sensor is accurate to about ±2 °C. Place it at sitting height, away from windows, lamps, and the Arduino itself. This tool supports, and does not replace, regular in-person checks.</p>
+  </footer>
+</div>
+<div id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const LV = ['Normal','Caution','Warning','Danger'];
+const MIN = 60e3, HR = 3600e3;
+
+const cfg = { caution:26, warn:29, danger:31, hyst:1, stale:15, unit:'C', ck:[0,180,60,30] };
+try { const s = JSON.parse(localStorage.getItem('heatwatch-cfg') || '{}'); Object.assign(cfg, s); } catch(e) {}
+function saveCfg(){ try { localStorage.setItem('heatwatch-cfg', JSON.stringify({caution:cfg.caution,warn:cfg.warn,danger:cfg.danger,stale:cfg.stale,unit:cfg.unit})); } catch(e) {} }
+
+const S = { readings:[], mode:'idle', level:0, warmSince:null, stale:false, acked:true, sound:false,
+  alerts:[], checkins:[], errors:0, bad:0, raw:[], lastArrival:0, simNow:0, quiet:false, flags:{},
+  range:3*HR, lastBeep:0, arrivals:[] };
+
+const nowD = () => S.mode === 'demo' ? S.simNow : Date.now();
+
+/* ---------- formatting ---------- */
+const conv = c => cfg.unit === 'F' ? c*9/5+32 : c;
+const fmt = (c, d=1) => c == null || !isFinite(c) ? '--' : conv(c).toFixed(d) + '°' + cfg.unit;
+const fmtDelta = c => { const v = cfg.unit==='F' ? c*9/5 : c; return (v>=0?'+':'−') + Math.abs(v).toFixed(1) + '°'; };
+const fmtTime = ts => new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+function fmtDur(ms){ if (ms < MIN) return ms <= 0 ? '0 min' : '<1 min'; const m = Math.round(ms/MIN); if (m < 60) return m + ' min'; return Math.floor(m/60) + 'h ' + String(m%60).padStart(2,'0') + 'm'; }
+function fmtAgo(ms){ const s = Math.max(0, Math.round(ms/1000)); return s < 90 ? s + ' s ago' : fmtDur(ms) + ' ago'; }
+
+/* ---------- physics ---------- */
+function heatIndexC(t, rh){
+  const T = t*9/5+32;
+  let hi = 0.5*(T + 61 + (T-68)*1.2 + rh*0.094);
+  if ((hi+T)/2 >= 80){
+    hi = -42.379 + 2.04901523*T + 10.14333127*rh - .22475541*T*rh - .00683783*T*T - .05481717*rh*rh
+       + .00122874*T*T*rh + .00085282*T*rh*rh - .00000199*T*T*rh*rh;
+    if (rh < 13 && T >= 80 && T <= 112) hi -= ((13-rh)/4)*Math.sqrt((17-Math.abs(T-95))/17);
+    else if (rh > 85 && T >= 80 && T <= 87) hi += ((rh-85)/10)*((87-T)/5);
+  }
+  return (hi-32)*5/9;
+}
+const feelsLike = (t, h) => t < 26.7 ? t : Math.max(t, heatIndexC(t, h));
+
+/* ---------- data access ---------- */
+function lowerBound(ts){ let lo=0, hi=S.readings.length; while(lo<hi){ const m=(lo+hi)>>1; if (S.readings[m].ts < ts) lo=m+1; else hi=m; } return lo; }
+const win = (a, b) => S.readings.slice(lowerBound(a), lowerBound(b+1));
+const avg = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : null;
+const last = () => S.readings[S.readings.length-1];
+
+function slope10(now){
+  const w = win(now-10*MIN, now);
+  if (w.length < 5 || w[w.length-1].ts - w[0].ts < 5*MIN) return null;
+  const x0 = w[0].ts; let sx=0, sy=0, sxx=0, sxy=0; const n=w.length;
+  for (const r of w){ const x=(r.ts-x0)/MIN; sx+=x; sy+=r.t; sxx+=x*x; sxy+=x*r.t; }
+  const d = n*sxx - sx*sx; if (!d) return null;
+  return ((n*sxy - sx*sy)/d) * 10;   // °C per 10 min
+}
+function timeAbove(rs, th){
+  let ms = 0;
+  for (let i=1;i<rs.length;i++){ if (rs[i-1].t >= th) ms += Math.min(rs[i].ts - rs[i-1].ts, MIN); }
+  return ms;
+}
+
+/* ---------- alerts ---------- */
+function cooldown(key, ms){ const n = nowD(); if (S.flags[key] == null || n - S.flags[key] > ms){ S.flags[key] = n; return true; } return false; }
+function addAlert(level, text){
+  S.alerts.unshift({ ts: nowD(), level, text });
+  if (S.alerts.length > 200) S.alerts.pop();
+  if (!S.quiet) notify(text);
+}
+function notify(text){
+  try { if ('Notification' in window && Notification.permission === 'granted') new Notification('HeatWatch', { body: text }); } catch(e) {}
+}
+
+/* ---------- levels ---------- */
+function thresholds(){ return [null, cfg.caution, cfg.warn, cfg.danger]; }
+function targetLevel(v, cur){
+  const th = thresholds(); let up = 0;
+  for (let i=1;i<=3;i++) if (v >= th[i]) up = i;
+  if (up >= cur) return up;
+  let l = cur; while (l > 0 && v < th[l] - cfg.hyst) l--;
+  return Math.max(l, up);
+}
+function evaluate(){
+  const now = nowD();
+  const w = win(now - MIN, now); if (!w.length) return;
+  const v = avg(w.map(r => Math.max(r.t, r.f)));
+  const next = targetLevel(v, S.level);
+  if (next !== S.level){
+    const up = next > S.level;
+    if (S.level === 0 && next > 0) S.warmSince = now;
+    if (next === 0) S.warmSince = null;
+    S.level = next;
+    addAlert(next, up ? `${LV[next]}: room reached ${fmt(v)} (1-min average)` : `Eased to ${LV[next]}: ${fmt(v)}`);
+    if (up && next >= 2){ S.acked = false; if (!S.quiet) beep(); }
+  }
+  const sl = slope10(now);
+  if (sl != null && sl >= 2 && cooldown('rise', 30*MIN)) addAlert(Math.max(2, S.level), `Temperature rising fast: ${fmtDelta(sl)} in 10 minutes`);
+  const hr = new Date(now).getHours();
+  if (hr >= 22 || hr < 6){
+    const n = win(now - 2*HR, now);
+    if (n.length > 10 && n[0].ts <= now - 110*MIN && Math.min(...n.map(r=>r.t)) >= cfg.caution && cooldown('night', 8*HR))
+      addAlert(Math.max(1, S.level), `Room has stayed above ${fmt(cfg.caution,0)} overnight. Without night cooling the body cannot recover.`);
+  }
+}
+
+/* ---------- readings ---------- */
+function addReading(t, h, ts){
+  if (!isFinite(t) || !isFinite(h) || t < -20 || t > 60 || h < 0 || h > 100){ S.bad++; return; }
+  const wasStale = S.stale;
+  S.readings.push({ ts, t, h, f: feelsLike(t, h) });
+  while (S.readings.length && ts - S.readings[0].ts > 26*HR) S.readings.shift();
+  S.lastArrival = performance.now();
+  if (!S.quiet){
+    S.arrivals.push(S.lastArrival); if (S.arrivals.length > 11) S.arrivals.shift();
+    const prev = S.readings[S.readings.length-2];
+    blip($('liveDot'));
+    if (!prev || prev.t !== t) blip($('tTemp'));
+  }
+  if (wasStale){ S.stale = false; addAlert(S.level, 'Sensor readings resumed'); }
+  evaluate();
+  if (!S.quiet) schedule();
+}
+function blip(el){ el.classList.remove('blip'); void el.offsetWidth; el.classList.add('blip'); }
+function pushRaw(line){ S.raw.push(line); if (S.raw.length > 7) S.raw.shift(); }
+function handleLine(line){
+  line = line.trim(); if (!line) return;
+  pushRaw(line);
+  let t, h;
+  if (line[0] === '{'){
+    let o; try { o = JSON.parse(line); } catch(e){ S.bad++; schedule(); return; }
+    if (o.error){ S.errors++; if (cooldown('senErr', 5*MIN)) addAlert(Math.max(1,S.level), `Sensor reported an error: ${o.error}`); schedule(); return; }
+    t = +o.t; h = +o.h;
+  } else {
+    const m = line.match(/T\s*=\s*(-?\d+(?:\.\d+)?).*?H\s*=\s*(\d+(?:\.\d+)?)/i);
+    if (!m){ S.bad++; schedule(); return; }
+    t = +m[1]; h = +m[2];
+  }
+  addReading(t, h, Date.now());
+}
+
+/* ---------- demo ---------- */
+let demoTimer = null;
+function demoValue(ts){
+  const d = new Date(ts), hr = d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600;
+  const s = Math.sin((hr-10)/24*2*Math.PI);
+  const t = 27 + 5*s + 0.5*Math.sin(ts/7e5) + (Math.random()-0.5)*0.4;
+  const h = 52 - 12*s + (Math.random()-0.5)*2;
+  return [Math.round(t*10)/10, Math.round(h*10)/10];
+}
+function resetData(){
+  Object.assign(S, { arrivals:[], readings:[], level:0, warmSince:null, stale:false, acked:true, alerts:[], checkins:[], errors:0, bad:0, raw:[], flags:{}, lastArrival:0 });
+}
+function startDemo(){
+  stopSerial();
+  S.mode = 'demo'; resetData();
+  const base = new Date(); base.setHours(12,0,0,0);
+  const end = base.getTime();
+  S.quiet = true;
+  S.checkins = [end - 100*MIN];
+  for (let ts = end - 3*HR; ts <= end; ts += 30e3){ S.simNow = ts; const [t,h] = demoValue(ts); addReading(t, h, ts); }
+  S.quiet = false; S.acked = true;
+  S.raw = []; pushRaw('{"t":' + last().t.toFixed(1) + ',"h":' + last().h.toFixed(1) + ',"ms":10800000}');
+  clearInterval(demoTimer);
+  demoTimer = setInterval(() => {
+    S.simNow += 20e3;
+    const [t,h] = demoValue(S.simNow);
+    pushRaw('{"t":' + t.toFixed(1) + ',"h":' + h.toFixed(1) + ',"ms":' + (S.simNow - end + 3*HR) + '}');
+    addReading(t, h, S.simNow);
+  }, 300);
+  setMsg(null);
+  render();
+}
+function stopDemo(){ clearInterval(demoTimer); demoTimer = null; }
+
+/* ---------- Web Serial ---------- */
+let port = null, reader = null, pipeDone = null;
+async function connectSerial(){
+  if (!('serial' in navigator)){
+    setMsg('This browser cannot reach USB serial ports. Open HeatWatch in Chrome or Edge on a computer, with the Arduino plugged in.');
+    return;
+  }
+  let p;
+  try { p = await navigator.serial.requestPort(); }
+  catch(e){
+    if (e && e.name === 'NotFoundError') return; // user closed the picker
+    setMsg('The browser blocked USB access from this page. Open the heatwatch.html file in Chrome or Edge on the computer the Arduino is plugged into.');
+    return;
+  }
+  try { await p.open({ baudRate: +$('baud').value }); }
+  catch(e){ setMsg('Could not open the port. Close the Arduino IDE Serial Monitor (only one program can use the port), then try again.'); return; }
+  stopDemo(); resetData();
+  port = p; S.mode = 'serial'; S.lastArrival = performance.now();
+  setRange(2*MIN);
+  setMsg(null); requestWake(); render();
+  readLoop();
+}
+async function readLoop(){
+  const dec = new TextDecoderStream();
+  pipeDone = port.readable.pipeTo(dec.writable).catch(()=>{});
+  reader = dec.readable.getReader();
+  let buf = '';
+  try {
+    while (true){
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += value;
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0){ handleLine(buf.slice(0, i)); buf = buf.slice(i+1); }
+      if (buf.length > 2000) buf = '';
+    }
+  } catch(e) {
+    if (S.mode === 'serial') addAlert(2, 'Lost connection to the Arduino. Check the USB cable.');
+  }
+  schedule();
+}
+async function stopSerial(){
+  if (!port) return;
+  const p = port; port = null;
+  try { await reader?.cancel(); } catch(e) {}
+  try { await pipeDone; } catch(e) {}
+  try { await p.close(); } catch(e) {}
+}
+if ('serial' in navigator) navigator.serial.addEventListener?.('disconnect', () => { if (S.mode === 'serial') { addAlert(2, 'Arduino unplugged.'); schedule(); } });
+
+/* ---------- sound / wake ---------- */
+let actx = null;
+function beep(){
+  if (!S.sound || !actx) return;
+  S.lastBeep = performance.now();
+  const t0 = actx.currentTime;
+  for (let i=0;i<3;i++){
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.0001, t0 + i*0.35);
+    g.gain.exponentialRampToValueAtTime(0.3, t0 + i*0.35 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + i*0.35 + 0.25);
+    o.connect(g).connect(actx.destination); o.start(t0 + i*0.35); o.stop(t0 + i*0.35 + 0.3);
+  }
+}
+async function requestWake(){ try { await navigator.wakeLock?.request('screen'); } catch(e) {} }
+
+/* ---------- UI helpers ---------- */
+function setMsg(t){ const m = $('connMsg'); m.hidden = !t; m.textContent = t || ''; }
+let toastT;
+function toast(t){ const el = $('toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(()=> el.hidden = true, 2600); }
+let pending = false;
+function schedule(){ if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; render(); }); }
+
+function actionText(l){
+  return [
+    'The room is comfortable. No action needed.',
+    `Getting warm. Close blinds and windows on the sunny side, offer water, and check in every ${cfg.ck[1]/60} hours.`,
+    `Hot. Move to the coolest room or a cooling centre if possible, use cool wet cloths and a fan, offer water often. Check in every hour.`,
+    `Dangerous heat for older adults. Move them somewhere cool now. Fans alone will not help much at this point. Check in at least every ${cfg.ck[3]} minutes and watch for the warning signs below.`
+  ][l];
+}
+
+/* ---------- render ---------- */
+function render(){
+  const now = nowD(), r = last();
+  const src = $('src');
+  src.dataset.mode = S.mode;
+  src.textContent = S.mode === 'demo' ? 'Demo data (simulated heat wave)' : S.mode === 'serial' ? 'Live from Arduino' : 'Not connected';
+  $('btnConnect').textContent = S.mode === 'serial' ? 'Disconnect' : 'Connect Arduino';
+  $('btnDemo').textContent = S.mode === 'demo' ? 'Restart demo' : 'Run demo';
+
+  // status
+  const st = $('status');
+  st.dataset.level = S.stale ? 'off' : S.level;
+  if (S.stale){
+    $('levelName').textContent = 'Sensor offline';
+    $('levelAction').textContent = `No reading for ${Math.round((performance.now()-S.lastArrival)/1000)} seconds, so the room could be unsafe without anyone knowing. Check the USB cable and sensor wiring, or check on the person directly.`;
+  } else if (!r){
+    $('levelName').textContent = S.mode === 'serial' ? 'Waiting' : 'Not connected';
+    $('levelAction').textContent = S.mode === 'serial' ? 'Connected. Waiting for the first reading from the sensor.' : 'Connect the Arduino or run the demo.';
+  } else {
+    $('levelName').textContent = LV[S.level];
+    $('levelAction').textContent = actionText(S.level);
+  }
+  const th = thresholds();
+  $('r0').textContent = 'below ' + fmt(cfg.caution,0);
+  $('r1').textContent = fmt(cfg.caution,0) + '–' + fmt(cfg.warn,0);
+  $('r2').textContent = fmt(cfg.warn,0) + '–' + fmt(cfg.danger,0);
+  $('r3').textContent = fmt(cfg.danger,0) + ' and up';
+  [...$('ladder').children].forEach((el,i) => el.classList.toggle('on', !S.stale && !!r && i === S.level));
+  $('btnAck').hidden = S.acked || !(S.level >= 2 || S.stale);
+  $('btnSound').textContent = S.sound ? 'Alarm sound on' : 'Turn on alarm sound';
+  $('btnSound').setAttribute('aria-pressed', S.sound);
+
+  // tiles
+  if (r){
+    const m1 = avg(win(now-MIN, now).map(x=>x.t));
+    $('tTemp').textContent = fmt(r.t);
+    $('tTempSub').textContent = '1-min average ' + fmt(m1);
+    $('tFeel').textContent = fmt(r.f);
+    $('tFeelSub').textContent = r.f - r.t >= 1 ? `Humidity adds ${fmtDelta(r.f - r.t)}` : 'About the same as the air';
+    $('tHum').textContent = r.h.toFixed(0) + '%';
+    $('tHumSub').textContent = r.h > 60 ? 'Humid: sweat evaporates slowly' : r.h < 30 ? 'Dry: dehydration happens faster' : 'Comfortable range is 30–60%';
+    const sl = slope10(now);
+    $('tTrend').textContent = sl == null ? '--' : fmtDelta(sl);
+    $('tTrendSub').textContent = sl == null ? 'Needs 5 minutes of data' : sl > 0.3 ? 'Rising, per 10 minutes' : sl < -0.3 ? 'Falling, per 10 minutes' : 'Steady, per 10 minutes';
+  }
+
+  // check-in
+  const lastCk = S.checkins[S.checkins.length-1];
+  const intv = cfg.ck[S.level];
+  const due = $('ckDue');
+  if (!S.level || !r){ due.textContent = 'Not needed right now'; due.classList.remove('over'); $('ckRule').textContent = 'Check-ins start once the room reaches Caution.'; }
+  else {
+    const warm = S.warmSince ?? now;
+    const dueAt = lastCk != null && lastCk >= warm ? lastCk + intv*MIN : warm;
+    const left = dueAt - now;
+    if (left <= 0){ due.textContent = left > -MIN ? 'Check-in due now' : 'Overdue by ' + fmtDur(-left); due.classList.add('over');
+      if (cooldown('ckOver', 30*MIN)) addAlert(S.level, 'Caregiver check-in is overdue'); }
+    else { due.textContent = 'Next check-in in ' + fmtDur(left); due.classList.remove('over'); }
+    $('ckRule').textContent = `${LV[S.level]} level: check in every ${intv >= 60 ? intv/60 + (intv===60?' hour':' hours') : intv + ' minutes'}.`;
+  }
+  $('ckList').innerHTML = S.checkins.slice(-3).reverse().map(t => `<li>Checked in at ${fmtTime(t)}</li>`).join('') || '<li>No check-ins logged yet</li>';
+
+  // sensor
+  const pill = $('senPill');
+  if (S.mode === 'idle'){ pill.className = 'pill idle'; pill.textContent = 'Idle'; }
+  else if (S.stale){ pill.className = 'pill bad'; pill.textContent = 'No data'; }
+  else { pill.className = 'pill ok'; pill.textContent = S.mode === 'demo' ? 'Simulated' : 'Receiving'; }
+  $('senLast').textContent = S.lastArrival && r ? fmtAgo(performance.now() - S.lastArrival) : '--';
+  const ar = S.arrivals;
+  $('senRate').textContent = ar.length >= 3 ? 'every ' + ((ar[ar.length-1]-ar[0])/(ar.length-1)/1000).toFixed(1) + ' s' : '--';
+  $('liveDot').classList.toggle('on', S.mode !== 'idle' && !S.stale && !!r);
+  $('senCount').textContent = S.readings.length.toLocaleString();
+  $('senErr').textContent = S.errors;
+  $('senBad').textContent = S.bad;
+  $('raw').textContent = S.raw.join('\n');
+
+  // stats
+  const a = k => avg(win(now-k, now).map(x=>x.t));
+  const d24 = win(now-24*HR, now);
+  $('sA5').textContent = fmt(a(5*MIN)); $('sA60').textContent = fmt(a(HR)); $('sA24').textContent = fmt(avg(d24.map(x=>x.t)));
+  if (d24.length){
+    let lo=Infinity, hi=-Infinity; for (const x of d24){ if (x.t<lo) lo=x.t; if (x.t>hi) hi=x.t; }
+    $('sMM').textContent = conv(lo).toFixed(0) + ' / ' + conv(hi).toFixed(0) + '°';
+  } else $('sMM').textContent = '--';
+  $('sT1').textContent = d24.length ? fmtDur(timeAbove(d24, cfg.caution)) : '--';
+  $('sT3').textContent = d24.length ? fmtDur(timeAbove(d24, cfg.danger)) : '--';
+  $('sT1k').textContent = 'Time at ' + fmt(cfg.caution,0) + ' or above';
+  $('sT3k').textContent = 'Time at ' + fmt(cfg.danger,0) + ' or above';
+
+  // alerts
+  $('alCount').textContent = S.alerts.length ? S.alerts.length + ' total' : '';
+  $('alerts').innerHTML = S.alerts.length ? S.alerts.slice(0, 40).map(x =>
+    `<li><time>${fmtTime(x.ts)}</time><span class="pill l${x.level}">${LV[x.level]}</span><span class="txt">${esc(x.text)}</span></li>`).join('')
+    : '<li><span></span><span></span><span class="txt muted">No alerts yet.</span></li>';
+
+  drawChart();
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- chart ---------- */
+function drawChart(){
+  const el = $('chart');
+  const W = Math.max(280, el.clientWidth || 600);
+  const H = Math.round(Math.max(230, Math.min(330, W*0.42)));
+  const P = { l:40, r:16, t:12, b:26 };
+  const now = nowD(), from = now - S.range;
+  const rs = win(from, now);
+  if (!rs.length){ el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><text class="c-empty" x="${W/2}" y="${H/2}" text-anchor="middle">Waiting for the first reading</text></svg>`; return; }
+
+  // downsample into time buckets
+  const n = Math.max(20, Math.floor((W - P.l - P.r)/2));
+  const bms = S.range / n, buckets = new Map();
+  for (const r of rs){ const k = Math.floor((r.ts - from)/bms); const b = buckets.get(k) || {k, t:0, f:0, c:0}; b.t+=r.t; b.f+=r.f; b.c++; buckets.set(k,b); }
+  const pts = [...buckets.values()].sort((a,b)=>a.k-b.k).map(b => ({ k:b.k, ts: from + (b.k+0.5)*bms, t:b.t/b.c, f:b.f/b.c }));
+
+  let lo = Math.min(...pts.map(p=>p.t)), hi = Math.max(...pts.map(p=>Math.max(p.t,p.f)));
+  const live = S.range <= 5*MIN;
+  if (live){ lo -= 1.5; hi += 1.5; }   // zoom in so small changes are visible
+  else { lo = Math.min(lo - 1, cfg.caution - 4); hi = Math.max(hi + 1, cfg.danger + 2); }
+  const Lo = conv(lo), Hi = conv(hi);
+  const step = (Hi - Lo) > 24 ? 5 : (Hi - Lo) > 12 ? 2 : (Hi - Lo) > 4 ? 1 : 0.5;
+  const yMin = Math.floor(Lo/step)*step, yMax = Math.ceil(Hi/step)*step;
+  const X = ts => P.l + (ts - from)/S.range*(W - P.l - P.r);
+  const Y = c => P.t + (yMax - conv(c))/(yMax - yMin)*(H - P.t - P.b);
+  const Yd = v => P.t + (yMax - v)/(yMax - yMin)*(H - P.t - P.b);
+  const x0 = P.l, x1 = W - P.r, yb = H - P.b;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Room temperature over the selected time range">`;
+
+  // zone bands
+  const top = P.t;
+  const band = (a, b, cls) => { const ya = Math.max(top, Math.min(yb, Y(b))), yb2 = Math.max(top, Math.min(yb, Y(a))); if (yb2 > ya) s += `<rect class="${cls}" x="${x0}" y="${ya}" width="${x1-x0}" height="${yb2-ya}"/>`; };
+  band(cfg.caution, cfg.warn, 'c-b1'); band(cfg.warn, cfg.danger, 'c-b2'); band(cfg.danger, 1e3, 'c-b3');
+
+  // grid + y labels
+  for (let v = yMin; v <= yMax + 1e-9; v += step){
+    const y = Yd(v);
+    s += `<line class="c-grid" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="c-axis" x="${x0-6}" y="${y+4}" text-anchor="end">${v}°</text>`;
+  }
+  // x ticks
+  const tick = live ? 30e3 : S.range <= 30*MIN ? 5*MIN : S.range <= 3*HR ? 30*MIN : 4*HR;
+  const tLabel = t => live ? new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'}) : fmtTime(t);
+  const tz = new Date(from).getTimezoneOffset()*MIN;
+  for (let t = Math.ceil((from - tz)/tick)*tick + tz; t <= now; t += tick){
+    const x = X(t); if (x < x0 + 18 || x > x1 - 18) continue;
+    s += `<line class="c-grid" x1="${x}" x2="${x}" y1="${yb}" y2="${yb+4}"/><text class="c-axis" x="${x}" y="${H-6}" text-anchor="middle">${tLabel(t)}</text>`;
+  }
+  // threshold lines
+  [[cfg.caution,1],[cfg.warn,2],[cfg.danger,3]].forEach(([v,i]) => {
+    const y = Y(v); if (y < top || y > yb) return;
+    s += `<line class="c-th c-th${i}" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="c-thl c-thl${i}" x="${x1-4}" y="${y-4}" text-anchor="end">${LV[i]} ${fmt(v,0)}</text>`;
+  });
+
+  // series split on gaps > 2 min
+  const gap = Math.max(1, Math.ceil(2*MIN/bms));
+  const segs = []; let cur = [];
+  pts.forEach((p,i) => { if (i && p.k - pts[i-1].k > gap){ segs.push(cur); cur = []; } cur.push(p); });
+  segs.push(cur);
+  for (const sg of segs){
+    if (!sg.length) continue;
+    const line = sg.map((p,i)=> (i?'L':'M') + X(p.ts).toFixed(1) + ' ' + Y(p.t).toFixed(1)).join('');
+    const feel = sg.map((p,i)=> (i?'L':'M') + X(p.ts).toFixed(1) + ' ' + Y(p.f).toFixed(1)).join('');
+    s += `<path class="c-area" d="${line}L${X(sg[sg.length-1].ts).toFixed(1)} ${yb}L${X(sg[0].ts).toFixed(1)} ${yb}Z"/>`;
+    s += `<path class="c-feel" d="${feel}"/><path class="c-line" d="${line}"/>`;
+  }
+  if (live) for (const p of pts) s += `<circle class="c-pt" cx="${X(p.ts).toFixed(1)}" cy="${Y(p.t).toFixed(1)}" r="2.5"/>`;
+  const lp = pts[pts.length-1];
+  s += `<circle class="c-dot" cx="${X(lp.ts)}" cy="${Y(lp.t)}" r="5"/>`;
+  s += '</svg>';
+  el.innerHTML = s;
+}
+
+/* ---------- 1 s housekeeping tick ---------- */
+setInterval(() => {
+  if (S.mode !== 'idle' && S.lastArrival){
+    const age = (performance.now() - S.lastArrival)/1000;
+    if (!S.stale && age > cfg.stale){
+      S.stale = true; S.acked = false;
+      addAlert(2, `No data from the sensor for ${cfg.stale} seconds`);
+      beep();
+    }
+  }
+  if (S.sound && !S.acked && (S.level >= 2 || S.stale) && performance.now() - S.lastBeep > 45e3) beep();
+  render();
+}, 1000);
+
+/* ---------- controls ---------- */
+$('btnConnect').onclick = async () => {
+  if (S.mode === 'serial'){ await stopSerial(); S.mode = 'idle'; S.stale = false; render(); return; }
+  connectSerial();
+};
+$('btnDemo').onclick = () => startDemo();
+$('btnSound').onclick = () => {
+  S.sound = !S.sound;
+  if (S.sound){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); S.lastBeep = 0; beep(); } catch(e){ S.sound = false; toast('This browser blocked sound.'); } }
+  render();
+};
+$('btnAck').onclick = () => { S.acked = true; render(); };
+$('btnCheck').onclick = () => { S.checkins.push(nowD()); addAlert(S.level, 'Caregiver check-in logged'); S.flags.ckOver = null; toast('Check-in logged at ' + fmtTime(nowD())); render(); };
+function setRange(ms){
+  S.range = ms;
+  document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.range === ms));
+}
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { setRange(+b.dataset.range); render(); });
+function bindNum(id, key){
+  const el = $(id); el.value = cfg[key];
+  el.onchange = () => {
+    const v = parseFloat(el.value); if (!isFinite(v)) { el.value = cfg[key]; return; }
+    const c = Object.assign({}, cfg, {[key]: v});
+    if (key !== 'stale' && !(c.caution < c.warn && c.warn < c.danger)){ toast('Thresholds must go up: caution, then warning, then danger.'); el.value = cfg[key]; return; }
+    cfg[key] = v; saveCfg(); evaluate(); render();
+  };
+}
+bindNum('thC','caution'); bindNum('thW','warn'); bindNum('thD','danger'); bindNum('stale','stale');
+$('unit').value = cfg.unit;
+$('unit').onchange = e => { cfg.unit = e.target.value; saveCfg(); render(); };
+$('btnNotify').onclick = async () => {
+  try {
+    if (!('Notification' in window)) throw 0;
+    const p = await Notification.requestPermission();
+    $('notifyHint').textContent = p === 'granted' ? 'Notifications are on' : 'Notifications were blocked by the browser';
+  } catch(e){ $('notifyHint').textContent = 'Notifications are not available here. Open the file directly in Chrome or Edge.'; }
+};
+function csv(){
+  return 'timestamp,temp_c,humidity_pct,feels_like_c\n' + S.readings.map(r => `${new Date(r.ts).toISOString()},${r.t.toFixed(1)},${r.h.toFixed(1)},${r.f.toFixed(1)}`).join('\n');
+}
+$('btnCopy').onclick = async () => {
+  try { await navigator.clipboard.writeText(csv()); toast(`Copied ${S.readings.length.toLocaleString()} readings`); }
+  catch(e){ toast('Copy was blocked. Use Download CSV instead.'); }
+};
+$('btnDl').onclick = () => {
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv()], {type:'text/csv'}));
+    a.download = 'heatwatch-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch(e){ toast('Download was blocked. Use Copy data as CSV instead.'); }
+};
+const clearWrap = $('clearWrap');
+function restoreClear(){ clearWrap.innerHTML = '<button id="btnClear" class="btn" type="button">Clear stored readings</button>'; bindClear(); }
+bindClear();
+function bindClear(){ $('btnClear').onclick = () => {
+  clearWrap.innerHTML = '<span>Delete all stored readings and alerts?</span><button class="btn" id="clrYes" type="button">Delete</button><button class="btn" id="clrNo" type="button">Keep</button>';
+  $('clrYes').onclick = () => { const m = S.mode; resetData(); S.mode = m; if (m === 'serial') S.lastArrival = performance.now(); restoreClear(); render(); toast('Readings cleared'); };
+  $('clrNo').onclick = restoreClear;
+}; }
+window.addEventListener('resize', () => schedule());
+
+startDemo();
+})();
+</script>
+</body>
+</html>
