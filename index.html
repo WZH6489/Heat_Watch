@@ -8,17 +8,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
 <style>
-/* Layout: health-app column. Mood hero (face + status) spans the top, then the "right now" clover beside the chart,
-   then the care-plan timeline beside saved history. The mood colour lives in registered --tone/--pa/--pb/--pc
-   properties, so every surface fades green -> red instead of snapping. */
+/* Layout: an app, not a page. A welcome screen you can act from, then an app shell (sidebar on desktop,
+   tab bar on phones) with four screens. Every screen is a grid whose rows stretch, so cards side by side
+   are always the same height. Mood colour lives in registered --tone/--pa/--pb/--pc, so it fades green -> red. */
 @property --tone{syntax:'<color>';inherits:true;initial-value:#2fae66}
 @property --pa{syntax:'<color>';inherits:true;initial-value:#7cd38e}
 @property --pb{syntax:'<color>';inherits:true;initial-value:#2bb39b}
 @property --pc{syntax:'<color>';inherits:true;initial-value:#a9dc6c}
 :root{
-  --bg:#f2f6f3; --surface:#ffffff; --ink:#1c2b24; --muted:#5b6e64; --line:#dfe8e2;
+  --bg:#f1f5f2; --surface:#ffffff; --ink:#1c2b24; --muted:#5b6e64; --line:#dfe8e2;
   --tone:#2fae66; --pa:#7cd38e; --pb:#2bb39b; --pc:#a9dc6c;
-  --g:#2fae66; --g-deep:#23864d; --r1:#ec6a52; --r2:#e0443a; --r3:#c8232b; --r-deep:#b51f27; --grey:#9aa9a1; --water:#3d9be9;
+  --g:#2fae66; --g-deep:#23864d; --r1:#ec6a52; --r2:#e0443a; --r3:#c8232b; --b1:#2fa3c8; --b2:#2a86d4; --b3:#2a5fcf; --r-deep:#b51f27; --grey:#9aa9a1; --water:#3d9be9;
   --face-ink:#1f2f27; --cheek:#ff8fa3; --sun-a:#fff6c9; --sun-b:#ffd76a;
   --tone-ink:color-mix(in srgb,var(--tone) 72%,var(--ink));
   --tone-deep:color-mix(in srgb,var(--tone) 82%,#000);
@@ -26,71 +26,140 @@
   --shadow:0 12px 30px -16px color-mix(in srgb,var(--tone) 55%,transparent),0 2px 6px rgba(20,40,30,.05);
   --f-display:"Fredoka","Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Nunito",ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;
-  --r:24px;
+  --r:24px; --side:240px;
   transition:--tone 1.6s ease,--pa 1.6s ease,--pb 1.6s ease,--pc 1.6s ease;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1613; --surface:#18221e; --ink:#e8f2ec; --muted:#9bb0a5; --line:#283730; --face-ink:#13201a; color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#0f1613; --surface:#18221e; --ink:#e8f2ec; --muted:#9bb0a5; --line:#283730; --face-ink:#13201a; color-scheme:dark}
-/* any problem turns the whole page red, a little deeper at each step */
 :root[data-level="1"]{--tone:#ec6a52; --pa:#ff9d7c; --pb:#ef6f69; --pc:#ffc08a}
 :root[data-level="2"]{--tone:#e0443a; --pa:#ff7d64; --pb:#e0443a; --pc:#ff9c6c}
 :root[data-level="3"]{--tone:#c8232b; --pa:#f2524b; --pb:#c8232b; --pc:#ff7767}
 :root[data-level="off"]{--tone:#c94a5e; --pa:#e47b8c; --pb:#c94a5e; --pc:#f0a3aa}
+/* too cold: arctic blues, deeper at each step */
+:root[data-level="c1"]{--tone:#2fa3c8; --pa:#8fd9ef; --pb:#3db4d6; --pc:#bfeaf6}
+:root[data-level="c2"]{--tone:#2a86d4; --pa:#7cc2f2; --pb:#2a86d4; --pc:#aedcfb}
+:root[data-level="c3"]{--tone:#2a5fcf; --pa:#6ea3f2; --pb:#2a5fcf; --pc:#a3c8ff}
 
 [hidden]{display:none!important}
 *{box-sizing:border-box}
 html{min-height:100%}
-body{margin:0;min-height:100%;background:var(--bg);background-image:radial-gradient(130% 520px at 50% -120px,color-mix(in srgb,var(--tone) 24%,var(--bg)) 0%,var(--bg) 100%);background-repeat:no-repeat;color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5}
-.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:18px 44px;display:flex;flex-direction:column;gap:20px}
+body{margin:0;min-height:100vh;background:var(--bg);background-image:radial-gradient(120% 560px at 60% -160px,color-mix(in srgb,var(--tone) 22%,var(--bg)) 0%,var(--bg) 100%);background-repeat:no-repeat;color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.5}
 h1,h2,h3,h4{margin:0;text-wrap:balance;line-height:1.15;font-family:var(--f-display);font-weight:600}
-h3{font-size:1.3rem}
+h3{font-size:1.25rem}
+a{color:inherit}
 .eyebrow{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .muted{color:var(--muted)}
+.sub{font-size:.86rem;color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-
-/* header */
-.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between}
-.brand{display:flex;gap:12px;align-items:center}
-.brand-mark{width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:var(--tone-deep);box-shadow:0 4px 0 color-mix(in srgb,var(--tone-deep) 70%,#000);flex:none}
-.brand-mark svg{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
-.brand-mark .f{fill:#fff;stroke:none}
-.brand h1{font-size:1.7rem}
-.brand p{margin:0;color:var(--muted);font-size:.95rem;font-weight:600}
-.conn{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip{font-size:.85rem;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--tone-soft);color:var(--tone-ink);white-space:nowrap}
+.ico{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
 /* controls */
-.btn{font:inherit;font-size:.95rem;font-weight:800;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 18px;min-height:44px;cursor:pointer;box-shadow:0 3px 0 var(--line);transition:transform .12s ease,box-shadow .12s ease}
+.btn{font:inherit;font-size:.95rem;font-weight:800;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:999px;padding:8px 18px;min-height:44px;cursor:pointer;box-shadow:0 3px 0 var(--line);transition:transform .12s ease,box-shadow .12s ease;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn:hover{transform:translateY(-1px)}
 .btn:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
 .btn.primary{background:var(--tone-deep);border-color:var(--tone-deep);color:#fff;box-shadow:0 4px 0 color-mix(in srgb,var(--tone-deep) 68%,#000)}
-.btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.wday:focus-visible,.seg button:focus-visible{outline:3px solid var(--tone);outline-offset:2px}
+.btn.lg{min-height:56px;padding:12px 26px;font-size:1.05rem}
+.btn:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible,.wday:focus-visible,.seg button:focus-visible,.nav a:focus-visible,.tabbar a:focus-visible,.qlink:focus-visible,.side-status:focus-visible{outline:3px solid var(--tone);outline-offset:2px}
 select,input[type=number],input[type=text],input[type=password],input[type=date]{font:inherit;font-size:.95rem;color:var(--ink);background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:8px 12px;min-height:44px}
 select{border-radius:999px;font-weight:700}
 input[type=number]{width:6em}
 input[type=text],input[type=password]{width:100%;min-width:0}
+.chip{font-size:.85rem;font-weight:800;padding:6px 12px;border-radius:999px;background:var(--tone-soft);color:var(--tone-ink);white-space:nowrap}
 .note{margin:0;padding:12px 16px;border-radius:18px;background:color-mix(in srgb,var(--r1) 14%,var(--surface));font-size:.95rem;font-weight:600}
 
-/* cards */
+/* ---------- welcome screen ---------- */
+.landing{min-height:100vh;max-width:1180px;margin:0 auto;padding-inline:24px;padding-block:18px 40px;display:flex;flex-direction:column;gap:30px}
+.land-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.brand{display:flex;gap:12px;align-items:center;text-decoration:none}
+.brand-mark{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:var(--tone-deep);box-shadow:0 4px 0 color-mix(in srgb,var(--tone-deep) 70%,#000);flex:none}
+.brand-mark svg{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
+.brand-mark .f{fill:#fff;stroke:none}
+.brand b{font-family:var(--f-display);font-weight:600;font-size:1.45rem}
+.land-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:32px;align-items:center;min-height:min(560px,62vh)}
+.land-copy{display:flex;flex-direction:column;gap:18px;min-width:0}
+.land-copy h1{font-size:clamp(2.4rem,5.2vw,4.1rem);font-weight:500;letter-spacing:-.01em;line-height:1.05}
+.land-copy h1 em{font-style:normal;color:var(--tone-ink)}
+.land-copy p{margin:0;font-size:1.15rem;max-width:44ch;color:var(--muted)}
+.land-actions{display:flex;flex-wrap:wrap;gap:12px}
+.land-quick{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:.95rem}
+.qlink{font:inherit;font-weight:800;color:var(--tone-ink);background:none;border:0;padding:8px 0;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.qlink:hover{text-decoration:underline}
+.land-art{position:relative;min-height:420px;display:grid;place-items:center}
+.art-blob{position:absolute;inset:6% 4% 4% 8%;border-radius:46% 54% 42% 58%/52% 44% 56% 48%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--tone) 18%,var(--surface)),color-mix(in srgb,var(--tone) 32%,var(--surface)))}
+.pedestal{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);width:46%;height:22%;border-radius:22px;background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--tone) 10%,var(--surface)));box-shadow:0 22px 40px -22px color-mix(in srgb,var(--tone) 70%,transparent)}
+.land-face{position:absolute;left:50%;bottom:34%;transform:translateX(-50%);animation:float 5s ease-in-out infinite}
+.land-face .face{width:clamp(130px,16vw,190px);height:auto}
+.land-shadow{position:absolute;left:50%;bottom:37%;width:22%;height:14px;transform:translateX(-50%);border-radius:50%;background:color-mix(in srgb,var(--tone) 40%,transparent);filter:blur(4px);animation:shadow 5s ease-in-out infinite;opacity:.45}
+@keyframes float{50%{transform:translate(-50%,-12px)}}
+@keyframes shadow{50%{transform:translateX(-50%) scale(.82);opacity:.3}}
+.land-badge{position:absolute;right:0;bottom:6%;display:flex;gap:12px;align-items:center;background:var(--surface);border-radius:20px;padding:12px 16px;box-shadow:var(--shadow);min-width:0}
+.land-badge .big{font-size:1.8rem}
+.land-sprig{position:absolute;left:6%;top:18%;width:84px;height:auto;opacity:.95}
+.land-steps{display:flex;flex-direction:column;gap:16px}
+.land-steps h2{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:500}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.step{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:8px;transition:transform .25s ease}
+.step:hover{transform:translateY(-3px)}
+.step .ticon{width:46px;height:46px}
+.step h3{font-size:1.2rem}
+.step p{margin:0;color:var(--muted);font-size:.95rem}
+.step-n{font-family:var(--f-display);font-weight:600;color:var(--tone-ink);font-size:.9rem}
+
+/* ---------- app shell ---------- */
+.app{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:22px 16px;background:color-mix(in srgb,var(--surface) 72%,transparent);border-right:1px solid var(--line);backdrop-filter:blur(8px)}
+.side-status{display:flex;gap:12px;align-items:center;padding:12px;border-radius:20px;background:var(--tone-soft);text-decoration:none;transition:transform .2s ease}
+.side-status:hover{transform:translateY(-1px)}
+.side-face .face{width:52px;height:52px}
+.ss-word{font-family:var(--f-display);font-weight:600;font-size:1.15rem;color:var(--tone-ink);line-height:1.1}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:16px;text-decoration:none;font-weight:800;color:var(--muted);transition:background-color .2s ease,color .2s ease;position:relative}
+.nav a:hover{background:color-mix(in srgb,var(--tone) 7%,transparent);color:var(--ink)}
+.nav a[aria-current="page"]{background:var(--surface);color:var(--tone-ink);box-shadow:var(--shadow)}
+.nav-badge{margin-left:auto;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:var(--r2);color:#fff;font-size:.75rem;font-weight:800;display:inline-grid;place-items:center;animation:pop .45s cubic-bezier(.3,1.6,.6,1) both}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
+.side-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.side-foot .btn{width:100%}
+.side-foot a.qlink{font-size:.9rem;justify-content:center}
+.main{min-width:0;min-height:100vh;padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px}
+.topbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.topbar h2{font-size:clamp(1.6rem,3vw,2.1rem)}
+.topbar p{margin:2px 0 0}
+.m-brand{display:none}
+.conn{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tabbar{display:none}
+
+/* screens */
+.view{display:none;flex-direction:column;gap:20px}
+.view.active{display:flex;flex:1}
+.view.active>*,.view.active .row2>*,.view.active .row3>*{animation:rise .5s cubic-bezier(.2,.8,.2,1) both}
+.view.active>*:nth-child(2),.view.active .row2>*:nth-child(2),.view.active .row3>*:nth-child(2){animation-delay:.06s}
+.view.active>*:nth-child(3),.view.active .row3>*:nth-child(3){animation-delay:.12s}
+.view.active>*:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:stretch}
+.row2.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+.row2.wide{grid-template-columns:minmax(0,4fr) minmax(0,8fr)}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}
 .card{background:var(--surface);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column;gap:14px}
 .card-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
-.sec-title{margin:0 0 12px 4px}
 
 /* mood hero */
 .status{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px 22px;align-items:center;background:linear-gradient(135deg,var(--tone-soft),var(--surface) 70%)}
 .status-main{min-width:0}
-.status h2{font-size:clamp(2.1rem,5.5vw,3.1rem);color:var(--tone-ink);margin-top:2px}
-.status p{margin:6px 0 0;font-size:1.1rem;max-width:62ch}
+.status h2{font-size:clamp(2.1rem,5vw,3rem);color:var(--tone-ink);margin-top:2px}
+.status p{margin:6px 0 0;font-size:1.08rem;max-width:62ch}
 .status-side{display:flex;flex-direction:column;gap:8px}
-.ladder{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.rung{border-radius:16px;padding:8px 12px;background:color-mix(in srgb,var(--tone) 8%,var(--surface));transition:background-color .9s ease,color .9s ease;min-width:0}
+.ladder{grid-column:1/-1;position:relative;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding:4px;border-radius:20px;background:color-mix(in srgb,var(--tone) 8%,var(--surface))}
+.rung{position:relative;z-index:1;border-radius:16px;padding:8px 12px;min-width:0;transition:color .5s ease}
 .rung b{display:block;font-family:var(--f-display);font-weight:600;font-size:1rem}
-.rung span{font-size:.8rem;color:var(--muted);transition:color .9s ease}
-.rung.on{background:var(--tone-deep);color:#fff}
+.rung span{font-size:.8rem;color:var(--muted);transition:color .5s ease}
+.rung.on{color:#fff}
 .rung.on span{color:rgba(255,255,255,.88)}
-:root[data-level="3"] .status{animation:glow 2.4s ease-in-out infinite}
+.ladder-ind{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:16px;background:var(--tone-deep);box-shadow:0 4px 12px -4px color-mix(in srgb,var(--tone) 70%,transparent);transition:transform .7s cubic-bezier(.3,1.25,.5,1),width .7s ease,opacity .4s ease;opacity:0}
+:root[data-level="3"] .status,:root[data-level="c3"] .status{animation:glow 2.4s ease-in-out infinite}
 @keyframes glow{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--tone) 22%,transparent),var(--shadow)}}
 .swap{animation:fadein .9s ease both}
 @keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -111,50 +180,63 @@ input[type=text],input[type=password]{width:100%;min-width:0}
 :root[data-level="2"] .face .m2,:root[data-level="off"] .face .m2,
 :root[data-level="3"] .face .m3{opacity:1}
 :root[data-level="2"] .face .sweat,:root[data-level="3"] .face .sweat{opacity:1}
-:root[data-level="3"] .face{animation:wobble 1.8s ease-in-out infinite}
+.face .m4 rect{fill:#fff;stroke:var(--face-ink);stroke-width:3}
+.face .m4 path{stroke:var(--face-ink);stroke-width:2.5}
+.face .frost{fill:none;stroke:#bfe6ff;stroke-width:3;stroke-linecap:round;opacity:0;transition:opacity .9s ease}
+.face .frost-cap{fill:#dff3ff;opacity:0;transition:opacity .9s ease}
+:root[data-level="c1"] .face .m1,:root[data-level="c2"] .face .m4,:root[data-level="c3"] .face .m4{opacity:1}
+:root[data-level="c2"] .face .frost,:root[data-level="c3"] .face .frost,:root[data-level="c3"] .face .frost-cap{opacity:1}
+:root[data-level="c1"] .face .ck,:root[data-level="c2"] .face .ck,:root[data-level="c3"] .face .ck{opacity:.25}
+:root[data-level="c3"] .status .face,:root[data-level="c3"] .side-face .face,:root[data-level="c3"] .sn-face .face{animation:shiver .32s linear infinite}
+@keyframes shiver{0%,100%{transform:translateX(0)}25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
+:root[data-level="3"] .status .face{animation:wobble 1.8s ease-in-out infinite}
 @keyframes wobble{50%{transform:translateY(-3px) rotate(-2deg)}}
 
-/* clover */
-.grid2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
-.grid2.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* right-now clover */
 .livechip{display:inline-flex;align-items:center;gap:7px;font-size:.85rem;font-weight:800;color:var(--muted)}
 .live{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--grey)}
 .live.on{background:var(--tone)}
 .live.blip{animation:blipdot .7s ease-out}
 @keyframes blipdot{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--tone) 70%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
-.clover-wrap{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:18px;align-items:center}
-.clover{width:100%;height:auto;max-width:220px;justify-self:center;overflow:visible}
+.clover-wrap{flex:1;display:grid;grid-template-columns:minmax(120px,170px) minmax(0,1fr);gap:16px;align-items:center}
+.clover{width:100%;height:auto;max-width:170px;justify-self:center;overflow:visible}
 .clover .petals{transform-origin:100px 108px;animation:breathe 6s ease-in-out infinite}
 @keyframes breathe{50%{transform:scale(1.03)}}
 .clover .pet{stroke:var(--surface);stroke-width:5;stroke-linejoin:round}
 .sa1{stop-color:color-mix(in srgb,var(--pa) 45%,#fff)} .sa2{stop-color:var(--pa)}
 .sb1{stop-color:color-mix(in srgb,var(--pb) 45%,#fff)} .sb2{stop-color:var(--pb)}
 .sc1{stop-color:color-mix(in srgb,var(--pc) 45%,#fff)} .sc2{stop-color:var(--pc)}
-.clover .ico{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.clover .ico .f{fill:#fff;stroke:none}
-.cl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;min-width:0}
+.clover .pico{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.clover .pico .f{fill:#fff;stroke:none}
+.cl-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 14px;min-width:0}
 .cl-list li{min-width:0}
-.cl-list .k{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem;color:var(--muted)}
+.cl-list .k{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.88rem;color:var(--muted)}
 .dot{width:12px;height:12px;border-radius:50%;flex:none}
 .d-a{background:var(--pa)} .d-b{background:var(--pb)} .d-c{background:var(--pc)} .d-t{background:var(--tone)}
-.big{font-family:var(--f-display);font-weight:600;font-size:2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.big{font-family:var(--f-display);font-weight:600;font-size:1.9rem;line-height:1.1;font-variant-numeric:tabular-nums}
 .big.blip{animation:numblip .6s ease-out}
 @keyframes numblip{0%{color:var(--tone)}100%{color:var(--ink)}}
-.sub{font-size:.86rem;color:var(--muted)}
 
 /* chart */
 .seg{display:inline-flex;background:color-mix(in srgb,var(--tone) 8%,var(--surface));border-radius:999px;padding:4px;gap:2px}
-.seg button{font:inherit;font-size:.88rem;font-weight:800;padding:6px 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer;min-height:36px}
+.seg button{font:inherit;font-size:.88rem;font-weight:800;padding:6px 14px;border:0;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer;min-height:36px;transition:background-color .25s ease,color .25s ease}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--tone-ink);box-shadow:0 2px 6px rgba(20,40,30,.12)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted);font-weight:600}
 .legend i{display:inline-block;width:18px;height:0;border-top:3px solid var(--tone);border-radius:2px;vertical-align:middle;margin-right:6px}
 .legend i.dash{border-top:2px dashed var(--ink);opacity:.6}
-#chart,#histChart{width:100%;min-height:230px}
-#chart svg,#histChart svg{display:block;width:100%;height:auto}
+.chart-card{min-height:100%}
+#chart{flex:1;min-height:240px;position:relative}
+#histChart{flex:1;min-height:260px;position:relative}
+#chart svg,#histChart svg{position:absolute;inset:0;display:block;width:100%;height:100%}
+#chart.reveal,#histChart.reveal{animation:reveal .9s cubic-bezier(.3,.7,.3,1)}
+@keyframes reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .c-grid{stroke:var(--line);stroke-width:1}
 .c-axis{fill:var(--muted);font-family:var(--f-body);font-weight:700;font-size:11px}
 .c-b1{fill:color-mix(in srgb,var(--r1) 9%,var(--surface))} .c-b2{fill:color-mix(in srgb,var(--r2) 14%,var(--surface))} .c-b3{fill:color-mix(in srgb,var(--r3) 20%,var(--surface))}
 .c-th{stroke-width:1.2;stroke-dasharray:3 5}
+.c-k1{fill:color-mix(in srgb,var(--b1) 9%,var(--surface))} .c-k2{fill:color-mix(in srgb,var(--b2) 14%,var(--surface))} .c-k3{fill:color-mix(in srgb,var(--b3) 20%,var(--surface))}
+.c-tk1{stroke:var(--b1)} .c-tk2{stroke:var(--b2)} .c-tk3{stroke:var(--b3)}
+.c-tkl1{fill:color-mix(in srgb,var(--b1) 80%,var(--ink))} .c-tkl2{fill:color-mix(in srgb,var(--b2) 80%,var(--ink))} .c-tkl3{fill:color-mix(in srgb,var(--b3) 80%,var(--ink))}
 .c-th1{stroke:var(--r1)} .c-th2{stroke:var(--r2)} .c-th3{stroke:var(--r3)}
 .c-thl{font-family:var(--f-body);font-size:11px;font-weight:800}
 .c-thl1{fill:color-mix(in srgb,var(--r1) 80%,var(--ink))} .c-thl2{fill:color-mix(in srgb,var(--r2) 80%,var(--ink))} .c-thl3{fill:color-mix(in srgb,var(--r3) 80%,var(--ink))}
@@ -165,27 +247,26 @@ input[type=text],input[type=password]{width:100%;min-width:0}
 .c-pt{fill:var(--tone)}
 .c-empty{fill:var(--muted);font-size:14px;font-weight:700}
 
-/* care-plan timeline */
-.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;position:relative}
-.timeline::before{content:"";position:absolute;left:17px;top:30px;bottom:30px;border-left:2px dashed var(--line)}
-.tl{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start}
-.tl-ic{width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;color:var(--tone-ink);box-shadow:var(--shadow);position:relative;z-index:1;margin-top:20px}
-.tl-ic svg,.ticon svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.tcard{display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,40%);background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;min-width:0}
-.tcard-main{padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+/* care cards (equal height, art on top like the reference) */
+.tcard{display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.tcard-art{position:relative;isolation:isolate;height:124px;flex:none;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:2px;padding:14px 18px;text-align:right;background:linear-gradient(165deg,color-mix(in srgb,var(--tone) 7%,var(--surface)),color-mix(in srgb,var(--tone) 18%,var(--surface)));overflow:hidden}
+.waves{position:absolute;left:0;right:0;bottom:0;width:100%;height:56%;z-index:-1}
+.waves .w1{fill:color-mix(in srgb,var(--tone) 24%,var(--surface));animation:drift 11s ease-in-out infinite alternate}
+.waves .w2{fill:color-mix(in srgb,var(--tone) 44%,var(--surface));animation:drift 8s ease-in-out infinite alternate-reverse}
+@keyframes drift{to{transform:translateX(-22px)}}
+.sun{position:absolute;left:18px;top:16px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 38% 38%,var(--sun-a),var(--sun-b));z-index:-1;opacity:.95}
+.tcard-val{font-family:var(--f-display);font-weight:600;font-size:1.5rem;line-height:1.15;text-wrap:balance;font-variant-numeric:tabular-nums;transition:color .9s ease}
+.tcard-val.over{color:color-mix(in srgb,var(--r3) 85%,var(--ink))}
+.tcard-cap{font-size:.8rem;font-weight:800;color:var(--muted)}
+.ckbar{width:min(150px,70%);height:8px;border-radius:999px;background:color-mix(in srgb,var(--surface) 70%,transparent);overflow:hidden;margin-top:6px}
+.ckbar span{display:block;height:100%;width:0;border-radius:inherit;background:var(--tone-deep);transition:width 1s linear}
+.tcard-main{flex:1;padding:16px 18px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .tcard-title{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-family:var(--f-display);font-weight:600;font-size:1.15rem}
 .ticon{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--tone-soft);color:var(--tone-ink);flex:none}
 .tcard-main p{margin:0;font-size:.92rem;color:var(--muted)}
-.tcard-art{position:relative;isolation:isolate;min-height:130px;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:2px;padding:16px 16px 14px;text-align:right;background:linear-gradient(165deg,color-mix(in srgb,var(--tone) 7%,var(--surface)),color-mix(in srgb,var(--tone) 18%,var(--surface)))}
-.waves{position:absolute;left:0;right:0;bottom:0;width:100%;height:52%;z-index:-1}
-.waves .w1{fill:color-mix(in srgb,var(--tone) 26%,var(--surface))}
-.waves .w2{fill:color-mix(in srgb,var(--tone) 46%,var(--surface))}
-.sun{position:absolute;left:16px;top:14px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 38% 38%,var(--sun-a),var(--sun-b));z-index:-1;opacity:.95}
-.tcard-val{font-family:var(--f-display);font-weight:600;font-size:1.55rem;line-height:1.15;text-wrap:balance;font-variant-numeric:tabular-nums;transition:color .9s ease}
-.tcard-val.over{color:color-mix(in srgb,var(--r3) 85%,var(--ink))}
-.tcard-cap{font-size:.8rem;font-weight:800;color:var(--muted)}
+.tcard-main .push{margin-top:auto}
 .checks{margin:0;padding:0;list-style:none;font-size:.86rem;color:var(--muted)}
-.mini-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px}
+.mini-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ms{background:color-mix(in srgb,var(--tone) 6%,var(--surface));border-radius:14px;padding:8px 10px;min-width:0}
 .ms .v{font-family:var(--f-display);font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums}
 .ms .k{font-size:.76rem;color:var(--muted);font-weight:700;line-height:1.3}
@@ -201,62 +282,83 @@ pre#raw{margin:8px 0 0;padding:10px;border-radius:12px;background:var(--bg);font
 .pill.l1{background:color-mix(in srgb,var(--r1) 18%,var(--surface));color:color-mix(in srgb,var(--r1) 70%,var(--ink))}
 .pill.l2{background:color-mix(in srgb,var(--r2) 18%,var(--surface));color:color-mix(in srgb,var(--r2) 72%,var(--ink))}
 .pill.bad,.pill.l3{background:color-mix(in srgb,var(--r3) 18%,var(--surface));color:color-mix(in srgb,var(--r3) 75%,var(--ink))}
+.pill.c1{background:color-mix(in srgb,var(--b1) 18%,var(--surface));color:color-mix(in srgb,var(--b1) 70%,var(--ink))}
+.pill.c2{background:color-mix(in srgb,var(--b2) 18%,var(--surface));color:color-mix(in srgb,var(--b2) 72%,var(--ink))}
+.pill.c3{background:color-mix(in srgb,var(--b3) 18%,var(--surface));color:color-mix(in srgb,var(--b3) 75%,var(--ink))}
 .pill.idle{background:color-mix(in srgb,var(--grey) 20%,var(--surface));color:var(--muted)}
 
-/* history week strip */
+/* history */
 .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.wday{font:inherit;background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0;border-radius:14px;color:var(--muted);font-weight:800;font-size:.76rem;letter-spacing:.06em;min-height:44px}
-.wday .wl{padding-bottom:2px;border-bottom:3px solid transparent}
-.wday[aria-pressed="true"]{color:var(--tone-ink)}
+.wday{font:inherit;background:none;border:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0;border-radius:16px;color:var(--muted);font-weight:800;font-size:.76rem;letter-spacing:.06em;min-height:44px;transition:background-color .2s ease,transform .2s ease}
+.wday .wl{padding-bottom:2px;border-bottom:3px solid transparent;transition:border-color .3s ease}
+.wday[aria-pressed="true"]{color:var(--tone-ink);background:color-mix(in srgb,var(--tone) 7%,var(--surface))}
 .wday[aria-pressed="true"] .wl{border-bottom-color:var(--tone)}
-.wday:hover{background:color-mix(in srgb,var(--tone) 6%,var(--surface))}
-.minic{width:30px;height:30px}
+.wday:hover{transform:translateY(-2px)}
+.minic{width:34px;height:34px}
 .minic circle{fill:var(--line)}
 .minic.lv0 .c1{fill:#7cd38e} .minic.lv0 .c2{fill:#2bb39b} .minic.lv0 .c3{fill:#a9dc6c}
 .minic.lv1 .c1{fill:#ff9d7c} .minic.lv1 .c2{fill:#ef6f69} .minic.lv1 .c3{fill:#ffc08a}
 .minic.lv2 .c1{fill:#ff7d64} .minic.lv2 .c2{fill:#e0443a} .minic.lv2 .c3{fill:#ff9c6c}
 .minic.lv3 .c1{fill:#f2524b} .minic.lv3 .c2{fill:#c8232b} .minic.lv3 .c3{fill:#ff7767}
-.hist-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.minic.kv1 .c1{fill:#8fd9ef} .minic.kv1 .c2{fill:#3db4d6} .minic.kv1 .c3{fill:#bfeaf6}
+.minic.kv2 .c1{fill:#7cc2f2} .minic.kv2 .c2{fill:#2a86d4} .minic.kv2 .c3{fill:#aedcfb}
+.minic.kv3 .c1{fill:#6ea3f2} .minic.kv3 .c2{fill:#2a5fcf} .minic.kv3 .c3{fill:#a3c8ff}
+.hist-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#histBody{display:grid}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:36px 22px}
+.empty .face{width:84px;height:84px;animation:float2 5s ease-in-out infinite}
+@keyframes float2{50%{transform:translateY(-6px)}}
+.empty h3{font-size:1.3rem}
+.empty p{margin:0;color:var(--muted);max-width:42ch}
 
 /* alerts + signs */
-.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:360px;overflow-y:auto}
-.alerts li{display:grid;grid-template-columns:4.8em auto 1fr;gap:10px;align-items:baseline;padding:9px 0;border-top:1px dashed var(--line);font-size:.93rem}
+.alerts-card{min-height:100%}
+.alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:520px;overflow-y:auto}
+.alerts li{display:grid;grid-template-columns:4.8em auto 1fr;gap:10px;align-items:baseline;padding:10px 0;border-top:1px dashed var(--line);font-size:.93rem}
 .alerts li:first-child{border-top:0}
 .alerts time{font-size:.82rem;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .alerts .txt{min-width:0}
+.al-sum{display:flex;flex-wrap:wrap;gap:8px}
 .signs h4{margin:0 0 4px;font-size:1.05rem}
 .signs ul{margin:0 0 8px;padding-left:1.2em;font-size:.95rem}
 .signs p{margin:0;font-size:.95rem}
 .signs .em{background:color-mix(in srgb,var(--r3) 12%,var(--surface));border-radius:18px;padding:12px 14px}
 .signs .em h4{color:color-mix(in srgb,var(--r3) 80%,var(--ink))}
+.signs .icy{background:color-mix(in srgb,var(--b2) 11%,var(--surface));border-radius:18px;padding:12px 14px}
+.signs .icy h4{color:color-mix(in srgb,var(--b3) 80%,var(--ink))}
 
 /* settings */
-details.settings{display:block;padding:0}
-details.settings>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:18px 22px;font-family:var(--f-display);font-weight:600;font-size:1.2rem}
-details.settings>summary::-webkit-details-marker{display:none}
-details.settings>summary .chev{margin-left:auto;width:12px;height:12px;border-right:3px solid var(--muted);border-bottom:3px solid var(--muted);transform:rotate(45deg);transition:transform .3s ease}
-details.settings[open]>summary .chev{transform:rotate(225deg)}
-.settings-body{padding:0 22px 22px;display:flex;flex-direction:column;gap:14px}
-.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 20px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 18px}
 .field{display:flex;flex-direction:column;gap:4px;font-size:.92rem;min-width:0}
 .field label{font-weight:800}
 .field .hint{font-size:.8rem;color:var(--muted)}
 .check{display:flex;gap:8px;align-items:center;font-size:.92rem;font-weight:600}
 .check input{width:20px;height:20px;accent-color:var(--tone-deep)}
-.sub-h{font-size:1.02rem;margin-top:4px}
-footer{font-size:.85rem;color:var(--muted);max-width:80ch}
-footer p{margin:0 0 6px}
-#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:.92rem;font-weight:700;max-width:calc(100% - 32px);z-index:60}
+.about{font-size:.88rem;color:var(--muted)}
+.about p{margin:0 0 6px}
+#toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:.92rem;font-weight:700;max-width:calc(100% - 32px);z-index:60;animation:fadein .3s ease both}
 
 /* senior mode */
-.senior{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;gap:16px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto;color:var(--ink);background:var(--bg);background-image:linear-gradient(180deg,color-mix(in srgb,var(--tone) 30%,var(--bg)) 0%,color-mix(in srgb,var(--tone) 7%,var(--bg)) 75%);box-shadow:inset 0 0 0 0 transparent;transition:box-shadow 1.4s ease}
-.senior[data-level="3"]{box-shadow:inset 0 0 0 10px var(--tone)}
+.senior{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;gap:16px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto;color:var(--ink);background:var(--bg);background-image:linear-gradient(180deg,color-mix(in srgb,var(--tone) 30%,var(--bg)) 0%,color-mix(in srgb,var(--tone) 7%,var(--bg)) 75%);box-shadow:inset 0 0 0 0 transparent;transition:box-shadow 1.4s ease;animation:fadein .4s ease both}
+.senior[data-level="3"],.senior[data-level="c3"]{box-shadow:inset 0 0 0 10px var(--tone)}
 body.senior-on{overflow:hidden}
 .sn-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .sn-time{font-family:var(--f-display);font-weight:600;font-size:clamp(1.6rem,4vw,2.4rem);line-height:1.1;font-variant-numeric:tabular-nums}
 .sn-date{font-size:1.15rem;font-weight:700;color:var(--muted)}
 .sn-exit{font:inherit;font-size:.9rem;font-weight:700;color:var(--muted);background:color-mix(in srgb,var(--surface) 70%,transparent);border:2px solid var(--line);border-radius:999px;padding:10px 16px;min-height:44px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
-.sn-exit.holding{border-color:var(--ink);color:var(--ink)}
+.sn-exit{position:relative;overflow:hidden;isolation:isolate;transition:transform .15s ease,border-color .2s ease,color .2s ease}
+.sn-exit::before{content:"";position:absolute;inset:0;z-index:-1;background:color-mix(in srgb,var(--tone) 35%,var(--surface));transform:scaleX(0);transform-origin:left center;transition:transform .25s ease}
+.sn-exit.holding{border-color:var(--tone-deep);color:var(--ink);transform:scale(.96)}
+.sn-exit.holding::before{transform:scaleX(1);transition:transform 1.5s linear}
+.sn-ok.done{animation:okpop .5s cubic-bezier(.3,1.6,.6,1)}
+@keyframes okpop{0%{transform:scale(.94)}100%{transform:scale(1)}}
+.sn-thanks{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;background:color-mix(in srgb,var(--g) 18%,var(--bg));animation:fadein .35s ease both}
+.sn-thanks svg{width:clamp(90px,16vh,140px);height:auto;fill:none;stroke:var(--g-deep);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.sn-thanks svg circle{stroke-dasharray:290;stroke-dashoffset:290;animation:draw .6s ease forwards}
+.sn-thanks svg path{stroke-dasharray:60;stroke-dashoffset:60;animation:draw .4s .45s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.sn-thanks h2{font-size:clamp(2.2rem,7vw,3.6rem)}
+.sn-thanks p{margin:0;font-size:1.35rem;font-weight:700;max-width:28ch}
 .sn-main{flex:1 0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px}
 .sn-face .face{width:clamp(72px,min(19vw,17vh),168px);height:auto}
 .sn-word{font-family:var(--f-display);font-size:clamp(2.2rem,min(9vw,10vh),5.2rem);font-weight:600;color:var(--tone-ink);line-height:1.05;text-wrap:balance}
@@ -282,11 +384,47 @@ body.senior-on{overflow:hidden}
 .sn-link{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;font-size:1rem;font-weight:700;min-height:44px;cursor:pointer}
 
 @media (prefers-reduced-motion:reduce){
-  .face .eyes,.clover .petals,:root[data-level="3"] .face,:root[data-level="3"] .status,.live.blip,.big.blip{animation:none}
-  .swap,.sn-water{animation-duration:.01s}
+  .face .eyes,.clover .petals,:root[data-level="3"] .status .face,:root[data-level="3"] .status,:root[data-level="c3"] .face,:root[data-level="c3"] .status,.live.blip,.big.blip,
+  .waves .w1,.waves .w2,.land-face,.land-shadow,.empty .face,.view.active>*,.view.active .row2>*,.view.active .row3>*,
+  #chart.reveal,#histChart.reveal,.nav-badge{animation:none}
+  .swap,.sn-water,.senior,#toast{animation-duration:.01s}
+  .ladder-ind{transition:opacity .2s ease}
+}
+@media (max-width:1100px){
+  .row3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row3>*:nth-child(3){grid-column:1/-1}
 }
 @media (max-width:980px){
-  .grid2,.grid2.even{grid-template-columns:minmax(0,1fr)}
+  .row2,.row2.even,.row2.wide{grid-template-columns:minmax(0,1fr)}
+  .land-hero{grid-template-columns:minmax(0,1fr)}
+  .land-art{min-height:320px}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{display:none}
+  .main{padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+  .m-brand{display:flex}
+  .tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:40;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+  .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;min-height:52px;border-radius:14px;text-decoration:none;font-size:.72rem;font-weight:800;color:var(--muted);position:relative}
+  .tabbar a[aria-current="page"]{color:var(--tone-ink);background:var(--tone-soft)}
+  .tabbar .nav-badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0;min-width:18px;height:18px;font-size:.66rem}
+  .steps{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .status{grid-template-columns:auto minmax(0,1fr)}
+  .status .face{width:76px;height:76px}
+  .status-side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
+  .ladder{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .rung{padding:6px 2px;text-align:center}
+  .rung b{font-size:.68rem}
+  .rung span{display:none}
+  .row3{grid-template-columns:minmax(0,1fr)}
+  .clover-wrap{grid-template-columns:minmax(0,1fr)}
+  .clover{max-width:180px}
+  .land-badge{right:0;bottom:2%}
+  .sn-actions{grid-template-columns:1fr}
+  .sn-btn{min-height:84px}
+  .landing{padding-inline:16px}
 }
 @media (max-height:860px){
   .senior{gap:10px}
@@ -299,286 +437,380 @@ body.senior-on{overflow:hidden}
   .sn-btn{min-height:84px}
   .sn-note{font-size:1.1rem}
 }
-@media (max-width:640px){
-  .status{grid-template-columns:auto minmax(0,1fr)}
-  .status .face{width:78px;height:78px}
-  .status-side{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}
-  .ladder{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .clover-wrap{grid-template-columns:minmax(0,1fr)}
-  .clover{max-width:200px}
-  .cl-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  .tcard{grid-template-columns:minmax(0,1fr)}
-  .tcard-art{order:-1;min-height:104px}
-  .sn-actions{grid-template-columns:1fr}
-  .sn-btn{min-height:84px}
-}
-@media (max-width:460px){
-  .wrap{padding-inline:16px}
-  .big{font-size:1.7rem}
-  .card{padding:18px}
-}
 </style>
 </head>
 <body>
 
-<div class="wrap">
-  <header class="top">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></svg></span>
-      <div><h1>HeatWatch</h1><p>Heat safety for the people you love</p></div>
-    </div>
-    <div class="conn">
-      <span id="src" class="chip" data-mode="demo">Demo data</span>
-      <label for="baud" class="sr">Baud rate</label>
-      <select id="baud"><option value="9600">9600 baud</option><option value="115200">115200 baud</option></select>
-      <button id="btnConnect" class="btn primary" type="button">Connect Arduino</button>
-      <button id="btnWatch" class="btn" type="button" hidden>Watch from cloud</button>
-      <button id="btnSenior" class="btn" type="button">Senior mode</button>
-      <button id="btnDemo" class="btn" type="button">Restart demo</button>
-    </div>
+<!-- ======================= welcome screen ======================= -->
+<div id="landing" class="landing" hidden>
+  <header class="land-top">
+    <a class="brand" href="#home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></svg></span><b>HeatWatch</b></a>
+    <a class="btn" href="#home">Open the app</a>
   </header>
-  <p id="connMsg" class="note" hidden></p>
-
-  <section id="status" class="card status" data-level="0" aria-live="polite">
-    <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
-      <circle class="fb" cx="60" cy="62" r="50"/>
-      <ellipse class="fh" cx="40" cy="34" rx="15" ry="8" transform="rotate(-28 40 34)"/>
-      <g class="eyes"><ellipse class="eye" cx="44" cy="57" rx="5.5" ry="7"/><ellipse class="eye" cx="76" cy="57" rx="5.5" ry="7"/></g>
-      <ellipse class="ck" cx="31" cy="75" rx="8" ry="5"/><ellipse class="ck" cx="89" cy="75" rx="8" ry="5"/>
-      <path class="m m0" d="M44 77 Q60 94 76 77"/>
-      <path class="m m1" d="M47 82 Q60 88 73 82"/>
-      <path class="m m2" d="M47 87 Q60 78 73 87"/>
-      <ellipse class="m m3" cx="60" cy="85" rx="8" ry="7"/>
-      <path class="sweat" d="M100 18c5 7 7 11 7 14a7 7 0 0 1-14 0c0-3 2-7 7-14Z"/>
-    </svg>
-    <div class="status-main">
-      <div class="eyebrow" id="todayDate">Today</div>
-      <h2 id="levelName">Normal</h2>
-      <p id="levelAction">Waiting for readings.</p>
+  <section class="land-hero">
+    <div class="land-copy">
+      <span class="eyebrow">Indoor temperature safety for older adults</span>
+      <h1>Keep the people you love <em>comfortable and safe</em>.</h1>
+      <p>HeatWatch watches the room around the clock, tells everyone what to do in plain words, and alerts family the moment it gets too hot or too cold.</p>
+      <div class="land-actions">
+        <a class="btn primary lg" href="#home">Open caregiver dashboard</a>
+        <a class="btn lg" href="#senior">Start senior screen</a>
+      </div>
+      <div class="land-quick">
+        <button id="landConnect" class="qlink" type="button"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0Z"/><path d="M12 16v5"/></svg>Connect the sensor</button>
+        <button id="landWatch" class="qlink" type="button" hidden><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M7 18a4 4 0 0 1-.6-8 6 6 0 0 1 11.4 1.5A3.5 3.5 0 0 1 17.5 18Z"/></svg>Watch from cloud</button>
+        <button id="landDemo" class="qlink" type="button"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M8 5v14l11-7Z"/></svg>Heat wave demo</button>
+        <button id="landCold" class="qlink" type="button"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/></svg>Cold snap demo</button>
+      </div>
     </div>
-    <div class="status-side">
-      <button id="btnSound" class="btn" type="button" aria-pressed="false">Turn on alarm sound</button>
-      <button id="btnAck" class="btn primary" type="button" hidden>Silence alarm</button>
-    </div>
-    <div class="ladder" id="ladder">
-      <div class="rung"><b>Normal</b><span id="r0"></span></div>
-      <div class="rung"><b>Caution</b><span id="r1"></span></div>
-      <div class="rung"><b>Warning</b><span id="r2"></span></div>
-      <div class="rung"><b>Danger</b><span id="r3"></span></div>
+    <div class="land-art" aria-hidden="true">
+      <div class="art-blob"></div>
+      <svg class="land-sprig" viewBox="-20 2 240 196"><g><path fill="var(--pa)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/><path fill="var(--pc)" transform="rotate(120 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/><path fill="var(--pb)" transform="rotate(240 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/></g></svg>
+      <div class="pedestal"></div>
+      <div class="land-shadow"></div>
+      <div class="face-slot land-face"></div>
+      <div class="land-badge">
+        <span class="live on" aria-hidden="true"></span>
+        <div><div class="big" id="lsTemp">--</div><div class="sub"><b id="lsWord">Normal</b> · <span id="lsMode">Demo</span></div></div>
+      </div>
     </div>
   </section>
-
-  <div class="grid2">
-    <section class="card" aria-label="Current readings">
-      <div class="card-head"><h3>Right now</h3><span class="livechip"><span class="live" id="liveDot" aria-hidden="true"></span>Live</span></div>
-      <div class="clover-wrap">
-        <svg class="clover" viewBox="-20 2 240 196" role="img" aria-label="Clover showing temperature, humidity and feels-like">
-          <defs>
-            <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sa1"/><stop offset="1" class="sa2"/></linearGradient>
-            <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sb1"/><stop offset="1" class="sb2"/></linearGradient>
-            <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sc1"/><stop offset="1" class="sc2"/></linearGradient>
-          </defs>
-          <g class="petals">
-            <path class="pet" fill="url(#gA)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
-            <path class="pet" fill="url(#gC)" transform="rotate(120 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
-            <path class="pet" fill="url(#gB)" transform="rotate(240 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
-            <g class="ico" transform="translate(84.4 40.4) scale(1.3)"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></g>
-            <g class="ico" transform="translate(41.1 117.4) scale(1.3)"><path d="M12 3.5c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z"/></g>
-            <g class="ico" transform="translate(127.7 117.4) scale(1.3)"><circle cx="12" cy="12" r="8.5"/><circle class="f" cx="9" cy="10" r="1.2"/><circle class="f" cx="15" cy="10" r="1.2"/><path d="M8.5 14a4 4 0 0 0 7 0"/></g>
-          </g>
-        </svg>
-        <ul class="cl-list">
-          <li><div class="k"><i class="dot d-a"></i>Room temperature</div><div class="big" id="tTemp">--</div><div class="sub" id="tTempSub">No reading yet</div></li>
-          <li><div class="k"><i class="dot d-c"></i>Feels like</div><div class="big" id="tFeel">--</div><div class="sub" id="tFeelSub">Heat index from temperature and humidity</div></li>
-          <li><div class="k"><i class="dot d-b"></i>Humidity</div><div class="big" id="tHum">--</div><div class="sub" id="tHumSub">Comfortable range is 30–60%</div></li>
-          <li><div class="k"><i class="dot d-t"></i>Trend</div><div class="big" id="tTrend">--</div><div class="sub" id="tTrendSub">Change over the last 10 minutes</div></li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="card-head">
-        <h3>Temperature history</h3>
-        <div class="seg" role="group" aria-label="Time range">
-          <button type="button" data-range="120000">Live</button>
-          <button type="button" data-range="1800000">30 min</button>
-          <button type="button" data-range="10800000" aria-pressed="true">3 hours</button>
-          <button type="button" data-range="86400000">24 hours</button>
-        </div>
-      </div>
-      <div class="legend"><span><i></i>Room temperature</span><span><i class="dash"></i>Feels like</span><span>Pink bands are caution, warning and danger</span></div>
-      <div id="chart"></div>
-    </section>
-  </div>
-
-  <div class="grid2">
-    <section aria-label="Today's care plan">
-      <h3 class="sec-title">Today's care plan</h3>
-      <ol class="timeline">
-        <li class="tl">
-          <span class="tl-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span>
-          <article class="tcard">
-            <div class="tcard-main">
-              <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span>Caregiver check-in</div>
-              <p id="ckRule"></p>
-              <div><button id="btnCheck" class="btn primary" type="button">I checked in just now</button></div>
-              <ul class="checks" id="ckList"></ul>
-            </div>
-            <div class="tcard-art">
-              <span class="sun" aria-hidden="true"></span>
-              <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M0 46 C40 22 80 66 120 40 S180 22 200 34 L200 100 L0 100Z"/><path class="w2" d="M0 70 C50 52 92 92 140 66 S188 58 200 64 L200 100 L0 100Z"/></svg>
-              <span class="tcard-cap">Next check-in</span>
-              <div class="tcard-val" id="ckDue">Not needed</div>
-            </div>
-          </article>
-        </li>
-        <li class="tl">
-          <span class="tl-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg></span>
-          <article class="tcard">
-            <div class="tcard-main">
-              <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></span>Last 24 hours</div>
-              <div class="mini-stats">
-                <div class="ms"><div class="v" id="sA5">--</div><div class="k">Average, 5 min</div></div>
-                <div class="ms"><div class="v" id="sA60">--</div><div class="k">Average, 1 hour</div></div>
-                <div class="ms"><div class="v" id="sA24">--</div><div class="k">Average, 24 hours</div></div>
-                <div class="ms"><div class="v" id="sMM">--</div><div class="k">Low / high</div></div>
-                <div class="ms"><div class="v" id="sT3">--</div><div class="k" id="sT3k">Time in danger zone</div></div>
-              </div>
-            </div>
-            <div class="tcard-art">
-              <span class="sun" aria-hidden="true"></span>
-              <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M0 40 C46 18 84 62 126 38 S182 26 200 30 L200 100 L0 100Z"/><path class="w2" d="M0 68 C44 56 96 90 142 64 S186 60 200 66 L200 100 L0 100Z"/></svg>
-              <span class="tcard-cap" id="sT1k">Time at caution or above</span>
-              <div class="tcard-val" id="sT1">--</div>
-            </div>
-          </article>
-        </li>
-        <li class="tl">
-          <span class="tl-ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4.5 10a11 11 0 0 1 15 0M7.5 13.5a6.5 6.5 0 0 1 9 0"/><circle cx="12" cy="17.5" r="1.4"/></svg></span>
-          <article class="tcard">
-            <div class="tcard-main">
-              <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><rect x="5" y="7" width="14" height="10" rx="2.5"/><path d="M9 7V4M15 7V4M9 20v-3M15 20v-3"/></svg></span>Sensor <span class="pill idle" id="senPill">Idle</span></div>
-              <dl class="kv">
-                <dt>Update rate</dt><dd id="senRate">--</dd>
-                <dt>Readings stored</dt><dd id="senCount">0</dd>
-                <dt>Sensor errors</dt><dd id="senErr">0</dd>
-                <dt>Unreadable lines</dt><dd id="senBad">0</dd>
-              </dl>
-              <details class="mini-d"><summary>Serial monitor</summary><pre id="raw" aria-label="Latest serial lines"></pre></details>
-            </div>
-            <div class="tcard-art">
-              <span class="sun" aria-hidden="true"></span>
-              <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M0 44 C36 26 86 60 124 42 S178 24 200 36 L200 100 L0 100Z"/><path class="w2" d="M0 66 C48 54 98 88 146 62 S190 62 200 66 L200 100 L0 100Z"/></svg>
-              <span class="tcard-cap">Last reading</span>
-              <div class="tcard-val" id="senLast">--</div>
-            </div>
-          </article>
-        </li>
-      </ol>
-    </section>
-
-    <section class="card">
-      <div class="card-head">
-        <h3>Saved history</h3>
-        <div class="row">
-          <label for="histDate" class="sr">Day</label>
-          <input id="histDate" type="date">
-          <button id="btnHist" class="btn" type="button">Load day</button>
-        </div>
-      </div>
-      <div class="week" id="week" role="group" aria-label="Last 7 days"></div>
-      <p class="muted" id="histMsg" style="margin:0;font-size:.92rem">Readings saved to the cloud appear here. Pick a day to see it.</p>
-      <div id="histBody" hidden>
-        <div class="hist-stats">
-          <div class="ms"><div class="v" id="hN">--</div><div class="k">Readings saved</div></div>
-          <div class="ms"><div class="v" id="hAvg">--</div><div class="k">Average</div></div>
-          <div class="ms"><div class="v" id="hMM">--</div><div class="k">Low / high</div></div>
-          <div class="ms"><div class="v" id="hFeel">--</div><div class="k">Peak feels like</div></div>
-          <div class="ms"><div class="v" id="hT1">--</div><div class="k" id="hT1k">Time at caution or above</div></div>
-          <div class="ms"><div class="v" id="hT3">--</div><div class="k" id="hT3k">Time in danger zone</div></div>
-          <div class="ms"><div class="v" id="hCk">--</div><div class="k">Check-ins</div></div>
-        </div>
-        <div id="histChart" style="margin-top:12px"></div>
-        <ul class="alerts" id="histAlerts" style="margin-top:8px"></ul>
-      </div>
-    </section>
-  </div>
-
-  <div class="grid2 even">
-    <section class="card">
-      <div class="card-head"><h3>Alerts</h3><span class="muted" id="alCount" style="font-size:.88rem;font-weight:700"></span></div>
-      <ul class="alerts" id="alerts"></ul>
-    </section>
-    <section class="card signs">
-      <h3>Warning signs to watch for</h3>
-      <div>
-        <h4>Heat exhaustion: cool them down</h4>
-        <ul>
-          <li>Heavy sweating, pale or clammy skin</li>
-          <li>Dizziness, headache, nausea, weakness</li>
-          <li>Fast breathing or heartbeat, extreme thirst, dark urine</li>
-        </ul>
-        <p class="muted">Move to a cooler spot, give water, apply cool wet cloths, and rest. In BC, call 8-1-1 for nurse advice.</p>
-      </div>
-      <div class="em">
-        <h4>Heat stroke: call 911</h4>
-        <ul>
-          <li>Confusion, slurred speech, fainting or not making sense</li>
-          <li>Very hot skin, or sweating has stopped</li>
-          <li>Loss of coordination or seizure</li>
-        </ul>
-        <p>While waiting, move them somewhere cool and cool the body with water, wet towels or ice packs on the neck, armpits and groin.</p>
-      </div>
-      <p class="muted">Older adults often feel less thirsty and may take medicines that raise heat risk. Offer water regularly even if they say they are fine.</p>
-    </section>
-  </div>
-
-  <details class="card settings">
-    <summary>Settings, cloud and data <span class="pill idle" id="cloudPill">Off</span><span class="chev" aria-hidden="true"></span></summary>
-    <div class="settings-body">
-      <h4 class="sub-h">Alert levels</h4>
-      <div class="settings">
-        <div class="field"><label for="unit">Display unit</label><select id="unit"><option value="C">Celsius (°C)</option><option value="F">Fahrenheit (°F)</option></select></div>
-        <div class="field"><label for="thC">Caution at (°C)</label><input id="thC" type="number" step="0.5" min="20" max="40"><span class="hint">BC health guidance: keep homes below 26 °C</span></div>
-        <div class="field"><label for="thW">Warning at (°C)</label><input id="thW" type="number" step="0.5" min="20" max="45"></div>
-        <div class="field"><label for="thD">Danger at (°C)</label><input id="thD" type="number" step="0.5" min="20" max="50"><span class="hint">Above 31 °C indoors is dangerous for people at risk</span></div>
-        <div class="field"><label for="stale">Sensor offline after (seconds)</label><input id="stale" type="number" step="1" min="5" max="300"></div>
-        <div class="field"><label>Browser notifications</label><button id="btnNotify" class="btn" type="button">Allow notifications</button><span class="hint" id="notifyHint">Pop-up alerts when the level rises</span></div>
-      </div>
-      <h4 class="sub-h">Cloud saving and phone alerts</h4>
-      <div class="row" style="font-size:.92rem"><span id="cloudStatus" class="muted">Not set up</span></div>
-      <div class="settings">
-        <div class="field"><label for="sbUrl">Supabase project URL</label><input id="sbUrl" type="text" placeholder="https://abcd1234.supabase.co" autocomplete="off"></div>
-        <div class="field"><label for="sbKey">Supabase anon key</label><input id="sbKey" type="password" placeholder="eyJhbGciOi…" autocomplete="off"><span class="hint">Project Settings → API → anon public key</span></div>
-        <div class="field"><label for="devName">Room name</label><input id="devName" type="text" placeholder="living-room"><span class="hint">Readings are saved and watched under this name</span></div>
-        <div class="field"><label for="ntfyTopic">ntfy topic for phone alerts</label><input id="ntfyTopic" type="text"><span class="hint">Subscribe to this topic in the ntfy app. Anyone who knows the name can read it.</span></div>
-        <div class="field"><label for="ntfyMin">Send phone alerts from</label><select id="ntfyMin"><option value="1">Caution and up</option><option value="2">Warning and up</option><option value="3">Danger only</option></select>
-          <label class="check"><input id="ntfyDemo" type="checkbox"> Also send during the demo</label>
-          <label class="check"><input id="serverAlerts" type="checkbox"> Supabase sends alerts (server alerts are set up)</label></div>
-      </div>
-      <div class="row">
-        <button id="btnCloudSave" class="btn primary" type="button">Save cloud settings</button>
-        <button id="btnTestPush" class="btn" type="button">Send test alert to phone</button>
-      </div>
-      <h4 class="sub-h">Data</h4>
-      <div class="row">
-        <button id="btnCopy" class="btn" type="button">Copy data as CSV</button>
-        <button id="btnDl" class="btn" type="button">Download CSV</button>
-        <span id="clearWrap" class="row"><button id="btnClear" class="btn" type="button">Clear stored readings</button></span>
-      </div>
+  <section class="land-steps" aria-label="How HeatWatch works">
+    <h2>How HeatWatch works</h2>
+    <div class="steps">
+      <article class="step"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/></svg></span><span class="step-n">Step 1</span><h3>Measure the room</h3><p>A small sensor reads temperature and humidity every second and works out how hot it really feels.</p></article>
+      <article class="step"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6Z"/><path d="M9 12l2 2 4-4"/></svg></span><span class="step-n">Step 2</span><h3>Watch day and night</h3><p>The cloud checks every reading, even with the laptop closed, and notices if the sensor goes quiet.</p></article>
+      <article class="step"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span><span class="step-n">Step 3</span><h3>Care, together</h3><p>Family gets phone alerts, and the senior's tablet speaks simple reminders with big I'm OK and Help buttons.</p></article>
     </div>
-  </details>
+  </section>
+</div>
 
-  <footer>
-    <p>Levels use the higher of room temperature and feels-like temperature, averaged over the last minute. A level only drops once readings fall 1 °C below its threshold, so alerts don't flicker on and off.</p>
-    <p>The DHT11 sensor is accurate to about ±2 °C. Place it at sitting height, away from windows, lamps, and the Arduino itself. This tool supports, and does not replace, regular in-person checks.</p>
-  </footer>
+<!-- ======================= app ======================= -->
+<div id="app" class="app">
+  <aside class="side" aria-label="HeatWatch">
+    <a class="brand" href="#start"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></svg></span><b>HeatWatch</b></a>
+    <a class="side-status" href="#home"><div class="face-slot side-face"></div><div><div class="ss-word" id="ssWord">Normal</div><div class="sub" id="ssTemp">--</div></div></a>
+    <nav class="nav" aria-label="Screens">
+      <a href="#home" data-nav="home"><svg class="ico" viewBox="0 0 24 24" width="20" height="20"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg>Home</a>
+      <a href="#history" data-nav="history"><svg class="ico" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>History</a>
+      <a href="#alerts" data-nav="alerts"><svg class="ico" viewBox="0 0 24 24" width="20" height="20"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>Alerts<span class="nav-badge" hidden></span></a>
+      <a href="#settings" data-nav="settings"><svg class="ico" viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Settings</a>
+    </nav>
+    <div class="side-foot">
+      <button id="btnSenior" class="btn primary" type="button"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M10 17h4"/></svg>Senior mode</button>
+      <a class="qlink" href="#start">Welcome screen</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <a class="brand m-brand" href="#start" style="margin-bottom:8px"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></svg></span><b>HeatWatch</b></a>
+        <h2 id="viewTitle">Good morning</h2>
+        <p class="muted" id="viewSub">Here's how the room is doing.</p>
+      </div>
+      <div class="conn">
+        <span id="src" class="chip" data-mode="demo">Demo data</span>
+        <label for="baud" class="sr">Baud rate</label>
+        <select id="baud"><option value="9600">9600 baud</option><option value="115200">115200 baud</option></select>
+        <button id="btnConnect" class="btn primary" type="button">Connect Arduino</button>
+        <button id="btnWatch" class="btn" type="button" hidden>Watch from cloud</button>
+        <button id="btnDemo" class="btn" type="button">Restart demo</button>
+        <button id="btnCold" class="btn" type="button">Cold snap demo</button>
+      </div>
+    </header>
+    <p id="connMsg" class="note" hidden></p>
+
+    <!-- ---------- Home ---------- -->
+    <section class="view" data-view="home">
+      <section id="status" class="card status" data-level="0" aria-live="polite">
+        <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="fb" cx="60" cy="62" r="50"/>
+          <ellipse class="fh" cx="40" cy="34" rx="15" ry="8" transform="rotate(-28 40 34)"/>
+          <g class="eyes"><ellipse class="eye" cx="44" cy="57" rx="5.5" ry="7"/><ellipse class="eye" cx="76" cy="57" rx="5.5" ry="7"/></g>
+          <ellipse class="ck" cx="31" cy="75" rx="8" ry="5"/><ellipse class="ck" cx="89" cy="75" rx="8" ry="5"/>
+          <path class="m m0" d="M44 77 Q60 94 76 77"/>
+          <path class="m m1" d="M47 82 Q60 88 73 82"/>
+          <path class="m m2" d="M47 87 Q60 78 73 87"/>
+          <ellipse class="m m3" cx="60" cy="85" rx="8" ry="7"/>
+          <path class="sweat" d="M100 18c5 7 7 11 7 14a7 7 0 0 1-14 0c0-3 2-7 7-14Z"/>
+          <path class="frost-cap" d="M14 50 Q20 16 60 12 Q100 16 106 50 Q96 40 88 46 Q80 34 70 42 Q60 30 50 42 Q40 34 32 46 Q24 40 14 50Z"/>
+          <g class="m m4"><rect x="43" y="77" width="34" height="14" rx="6"/><path d="M51.5 77v14M60 77v14M68.5 77v14M43 84h34"/></g>
+          <g class="frost" transform="translate(101 20)"><path d="M0-9V9M-7.8-4.5L7.8 4.5M-7.8 4.5L7.8-4.5"/></g>
+        </svg>
+        <div class="status-main">
+          <div class="eyebrow" id="todayDate">Today</div>
+          <h2 id="levelName">Normal</h2>
+          <p id="levelAction">Waiting for readings.</p>
+        </div>
+        <div class="status-side">
+          <button id="btnSound" class="btn" type="button" aria-pressed="false">Turn on alarm sound</button>
+          <button id="btnAck" class="btn primary" type="button" hidden>Silence alarm</button>
+        </div>
+        <div class="ladder" id="ladder">
+          <div class="rung"><b>Very cold</b><span id="rc3"></span></div>
+          <div class="rung"><b>Cold</b><span id="rc2"></span></div>
+          <div class="rung"><b>Chilly</b><span id="rc1"></span></div>
+          <div class="rung"><b>Normal</b><span id="r0"></span></div>
+          <div class="rung"><b>Caution</b><span id="r1"></span></div>
+          <div class="rung"><b>Warning</b><span id="r2"></span></div>
+          <div class="rung"><b>Danger</b><span id="r3"></span></div>
+          <span class="ladder-ind" id="ladderInd" aria-hidden="true"></span>
+        </div>
+      </section>
+
+      <div class="row2">
+        <section class="card" aria-label="Current readings">
+          <div class="card-head"><h3>Right now</h3><span class="livechip"><span class="live" id="liveDot" aria-hidden="true"></span>Live</span></div>
+          <div class="clover-wrap">
+            <svg class="clover" viewBox="-20 2 240 196" role="img" aria-label="Clover showing temperature, humidity and feels-like">
+              <defs>
+                <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sa1"/><stop offset="1" class="sa2"/></linearGradient>
+                <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sb1"/><stop offset="1" class="sb2"/></linearGradient>
+                <linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="sc1"/><stop offset="1" class="sc2"/></linearGradient>
+              </defs>
+              <g class="petals">
+                <path class="pet" fill="url(#gA)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
+                <path class="pet" fill="url(#gC)" transform="rotate(120 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
+                <path class="pet" fill="url(#gB)" transform="rotate(240 100 108)" d="M100 108 C58 84 40 16 100 12 C160 16 142 84 100 108Z"/>
+                <g class="pico" transform="translate(84.4 40.4) scale(1.3)"><path d="M10 4.5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0Z"/><circle class="f" cx="12" cy="17" r="1.7"/></g>
+                <g class="pico" transform="translate(41.1 117.4) scale(1.3)"><path d="M12 3.5c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11Z"/></g>
+                <g class="pico" transform="translate(127.7 117.4) scale(1.3)"><circle cx="12" cy="12" r="8.5"/><circle class="f" cx="9" cy="10" r="1.2"/><circle class="f" cx="15" cy="10" r="1.2"/><path d="M8.5 14a4 4 0 0 0 7 0"/></g>
+              </g>
+            </svg>
+            <ul class="cl-list">
+              <li><div class="k"><i class="dot d-a"></i>Temperature</div><div class="big" id="tTemp">--</div><div class="sub" id="tTempSub">No reading yet</div></li>
+              <li><div class="k"><i class="dot d-c"></i>Feels like</div><div class="big" id="tFeel">--</div><div class="sub" id="tFeelSub">Heat index from temperature and humidity</div></li>
+              <li><div class="k"><i class="dot d-b"></i>Humidity</div><div class="big" id="tHum">--</div><div class="sub" id="tHumSub">Comfortable range is 30–60%</div></li>
+              <li><div class="k"><i class="dot d-t"></i>Trend</div><div class="big" id="tTrend">--</div><div class="sub" id="tTrendSub">Change over the last 10 minutes</div></li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="card chart-card">
+          <div class="card-head">
+            <h3>Temperature history</h3>
+            <div class="seg" role="group" aria-label="Time range">
+              <button type="button" data-range="120000">Live</button>
+              <button type="button" data-range="1800000">30 min</button>
+              <button type="button" data-range="10800000" aria-pressed="true">3 hours</button>
+              <button type="button" data-range="86400000">24 hours</button>
+            </div>
+          </div>
+          <div class="legend"><span><i></i>Room temperature</span><span><i class="dash"></i>Feels like</span><span>Pink bands are too hot, blue bands are too cold</span></div>
+          <div id="chart"></div>
+        </section>
+      </div>
+
+      <div class="row3">
+        <article class="tcard">
+          <div class="tcard-art">
+            <span class="sun" aria-hidden="true"></span>
+            <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M-30 46 C10 22 60 66 100 40 S170 22 230 34 L230 100 L-30 100Z"/><path class="w2" d="M-30 70 C20 52 72 92 120 66 S190 58 230 64 L230 100 L-30 100Z"/></svg>
+            <span class="tcard-cap">Next check-in</span>
+            <div class="tcard-val" id="ckDue">Not needed</div>
+            <div class="ckbar" aria-hidden="true"><span id="ckBar"></span></div>
+          </div>
+          <div class="tcard-main">
+            <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></span>Caregiver check-in</div>
+            <p id="ckRule"></p>
+            <ul class="checks" id="ckList"></ul>
+            <div class="push"><button id="btnCheck" class="btn primary" type="button">I checked in just now</button></div>
+          </div>
+        </article>
+        <article class="tcard">
+          <div class="tcard-art">
+            <span class="sun" aria-hidden="true"></span>
+            <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M-30 40 C16 18 54 62 96 38 S172 26 230 30 L230 100 L-30 100Z"/><path class="w2" d="M-30 68 C14 56 76 90 122 64 S196 60 230 66 L230 100 L-30 100Z"/></svg>
+            <span class="tcard-cap" id="sT1k">Time at caution or above</span>
+            <div class="tcard-val" id="sT1">--</div>
+          </div>
+          <div class="tcard-main">
+            <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-6"/></svg></span>Last 24 hours</div>
+            <div class="mini-stats">
+              <div class="ms"><div class="v" id="sA5">--</div><div class="k">Average, 5 min</div></div>
+              <div class="ms"><div class="v" id="sA60">--</div><div class="k">Average, 1 hour</div></div>
+              <div class="ms"><div class="v" id="sA24">--</div><div class="k">Average, 24 hours</div></div>
+              <div class="ms"><div class="v" id="sMM">--</div><div class="k">Low / high</div></div>
+            </div>
+            <p class="push"><b id="sT3">--</b> <span id="sT3k">in the danger zone</span></p>
+          </div>
+        </article>
+        <article class="tcard">
+          <div class="tcard-art">
+            <span class="sun" aria-hidden="true"></span>
+            <svg class="waves" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path class="w1" d="M-30 44 C6 26 66 60 104 42 S168 24 230 36 L230 100 L-30 100Z"/><path class="w2" d="M-30 66 C18 54 78 88 126 62 S200 62 230 66 L230 100 L-30 100Z"/></svg>
+            <span class="tcard-cap">Last reading</span>
+            <div class="tcard-val" id="senLast">--</div>
+          </div>
+          <div class="tcard-main">
+            <div class="tcard-title"><span class="ticon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24" width="18" height="18"><path d="M4.5 10a11 11 0 0 1 15 0M7.5 13.5a6.5 6.5 0 0 1 9 0"/><circle cx="12" cy="17.5" r="1.4"/></svg></span>Sensor <span class="pill idle" id="senPill">Idle</span></div>
+            <dl class="kv">
+              <dt>Update rate</dt><dd id="senRate">--</dd>
+              <dt>Readings stored</dt><dd id="senCount">0</dd>
+              <dt>Sensor errors</dt><dd id="senErr">0</dd>
+              <dt>Unreadable lines</dt><dd id="senBad">0</dd>
+            </dl>
+            <details class="mini-d push"><summary>Serial monitor</summary><pre id="raw" aria-label="Latest serial lines"></pre></details>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ---------- History ---------- -->
+    <section class="view" data-view="history">
+      <section class="card">
+        <div class="card-head">
+          <h3>This week</h3>
+          <div class="row">
+            <label for="histDate" class="sr">Day</label>
+            <input id="histDate" type="date">
+            <button id="btnHist" class="btn" type="button">Load day</button>
+          </div>
+        </div>
+        <div class="week" id="week" role="group" aria-label="Last 7 days"></div>
+        <p class="muted" id="histMsg" style="margin:0;font-size:.92rem">Pick a day to see what the room was like.</p>
+      </section>
+      <div id="histBody" class="row2 wide" hidden>
+        <section class="card">
+          <h3>Day summary</h3>
+          <div class="hist-stats">
+            <div class="ms"><div class="v" id="hAvg">--</div><div class="k">Average</div></div>
+            <div class="ms"><div class="v" id="hMM">--</div><div class="k">Low / high</div></div>
+            <div class="ms"><div class="v" id="hFeel">--</div><div class="k">Peak feels like</div></div>
+            <div class="ms"><div class="v" id="hCk">--</div><div class="k">Check-ins</div></div>
+            <div class="ms"><div class="v" id="hT1">--</div><div class="k" id="hT1k">Time at caution or above</div></div>
+            <div class="ms"><div class="v" id="hT3">--</div><div class="k" id="hT3k">Time in danger zone</div></div>
+          </div>
+          <h4 style="font-size:1.02rem">Alerts that day</h4>
+          <ul class="alerts" id="histAlerts" style="max-height:260px"></ul>
+          <p class="sub" style="margin:auto 0 0"><b id="hN">--</b> readings saved</p>
+        </section>
+        <section class="card">
+          <h3>Temperature that day</h3>
+          <div class="legend"><span><i></i>Room temperature</span><span><i class="dash"></i>Feels like</span></div>
+          <div id="histChart"></div>
+        </section>
+      </div>
+      <section class="card empty" id="histEmpty">
+        <div class="face-slot"></div>
+        <h3 id="histEmptyTitle">Nothing to show yet</h3>
+        <p id="histEmptyText">Turn on cloud saving in Settings and HeatWatch will keep a day-by-day history of the room.</p>
+        <a class="btn primary" href="#settings" id="histSetup">Set up cloud saving</a>
+      </section>
+    </section>
+
+    <!-- ---------- Alerts ---------- -->
+    <section class="view" data-view="alerts">
+      <div class="row2 even">
+        <section class="card alerts-card">
+          <div class="card-head"><h3>Today's alerts</h3><span class="muted" id="alCount" style="font-size:.88rem;font-weight:700"></span></div>
+          <div class="al-sum" id="alSum"></div>
+          <ul class="alerts" id="alerts"></ul>
+          <div class="empty" id="alertsEmpty" style="padding:18px 10px">
+            <div class="face-slot"></div>
+            <h3>All quiet</h3>
+            <p>No alerts so far. HeatWatch will list every level change, sensor problem and check-in here.</p>
+          </div>
+        </section>
+        <section class="card signs">
+          <h3>Warning signs to watch for</h3>
+          <div>
+            <h4>Heat exhaustion: cool them down</h4>
+            <ul>
+              <li>Heavy sweating, pale or clammy skin</li>
+              <li>Dizziness, headache, nausea, weakness</li>
+              <li>Fast breathing or heartbeat, extreme thirst, dark urine</li>
+            </ul>
+            <p class="muted">Move to a cooler spot, give water, apply cool wet cloths, and rest. In BC, call 8-1-1 for nurse advice.</p>
+          </div>
+          <div class="em">
+            <h4>Heat stroke: call 911</h4>
+            <ul>
+              <li>Confusion, slurred speech, fainting or not making sense</li>
+              <li>Very hot skin, or sweating has stopped</li>
+              <li>Loss of coordination or seizure</li>
+            </ul>
+            <p>While waiting, move them somewhere cool and cool the body with water, wet towels or ice packs on the neck, armpits and groin.</p>
+          </div>
+          <div class="icy">
+            <h4>Too cold: warm them up</h4>
+            <ul>
+              <li>Shivering, cold or pale skin, numb fingers</li>
+              <li>Slow or slurred speech, confusion, unusual sleepiness</li>
+              <li>Shivering that stops while they are still cold can mean hypothermia: call 911</li>
+            </ul>
+            <p>Warm the room, add dry layers and a blanket, and offer warm drinks and food. Avoid hot baths or heating pads straight on the skin.</p>
+          </div>
+          <p class="muted">Older adults often feel less thirsty and feel the cold less sharply. Offer water and warm drinks regularly even if they say they are fine.</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ---------- Settings ---------- -->
+    <section class="view" data-view="settings">
+      <div class="row2 even">
+        <section class="card">
+          <h3>Alert levels</h3>
+          <div class="settings">
+            <div class="field"><label for="unit">Display unit</label><select id="unit"><option value="C">Celsius (°C)</option><option value="F">Fahrenheit (°F)</option></select></div>
+            <div class="field"><label for="stale">Sensor offline after (seconds)</label><input id="stale" type="number" step="1" min="5" max="300"></div>
+            <div class="field"><label for="thC">Caution at (°C)</label><input id="thC" type="number" step="0.5" min="20" max="40"><span class="hint">BC health guidance: keep homes below 26 °C</span></div>
+            <div class="field"><label for="thW">Warning at (°C)</label><input id="thW" type="number" step="0.5" min="20" max="45"></div>
+            <div class="field"><label for="thD">Danger at (°C)</label><input id="thD" type="number" step="0.5" min="20" max="50"><span class="hint">Above 31 °C indoors is dangerous for people at risk</span></div>
+            <div class="field"><label for="thCh">Chilly below (°C)</label><input id="thCh" type="number" step="0.5" min="5" max="25"><span class="hint">UK health guidance: keep homes at 18 °C or warmer</span></div>
+            <div class="field"><label for="thCo">Cold below (°C)</label><input id="thCo" type="number" step="0.5" min="5" max="25"></div>
+            <div class="field"><label for="thVc">Very cold below (°C)</label><input id="thVc" type="number" step="0.5" min="0" max="25"></div>
+            <div class="field"><label>Browser notifications</label><button id="btnNotify" class="btn" type="button">Allow notifications</button><span class="hint" id="notifyHint">Pop-up alerts when the level rises</span></div>
+          </div>
+          <div class="about" style="margin-top:auto">
+            <p>Levels use the higher of room temperature and feels-like temperature, averaged over the last minute. A level only drops once readings fall 1 °C below its threshold, so alerts don't flicker on and off.</p>
+            <p>The DHT11 sensor is accurate to about ±2 °C. Place it at sitting height, away from windows, lamps, and the Arduino itself. HeatWatch supports, and does not replace, regular in-person checks.</p>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Cloud saving and phone alerts</h3><span class="pill idle" id="cloudPill">Off</span></div>
+          <p class="muted" id="cloudStatus" style="margin:0;font-size:.92rem">Not set up</p>
+          <div class="settings">
+            <div class="field"><label for="sbUrl">Supabase project URL</label><input id="sbUrl" type="text" placeholder="https://abcd1234.supabase.co" autocomplete="off"></div>
+            <div class="field"><label for="sbKey">Supabase anon key</label><input id="sbKey" type="password" placeholder="eyJhbGciOi…" autocomplete="off"><span class="hint">Project Settings → API → anon public key</span></div>
+            <div class="field"><label for="devName">Room name</label><input id="devName" type="text" placeholder="living-room"><span class="hint">Readings are saved and watched under this name</span></div>
+            <div class="field"><label for="ntfyTopic">ntfy topic for phone alerts</label><input id="ntfyTopic" type="text"><span class="hint">Subscribe to this topic in the ntfy app. Anyone who knows the name can read it.</span></div>
+          </div>
+          <div class="field"><label for="ntfyMin">Send phone alerts from</label><select id="ntfyMin" style="max-width:260px"><option value="1">Caution and up</option><option value="2">Warning and up</option><option value="3">Danger only</option></select></div>
+          <label class="check"><input id="ntfyDemo" type="checkbox"> Also send during the demo</label>
+          <label class="check"><input id="serverAlerts" type="checkbox"> Supabase sends alerts (server alerts are set up)</label>
+          <div class="row" style="margin-top:auto">
+            <button id="btnCloudSave" class="btn primary" type="button">Save cloud settings</button>
+            <button id="btnTestPush" class="btn" type="button">Send test alert to phone</button>
+          </div>
+        </section>
+      </div>
+      <section class="card">
+        <div class="card-head"><h3>Your data</h3>
+          <div class="row">
+            <button id="btnCopy" class="btn" type="button">Copy data as CSV</button>
+            <button id="btnDl" class="btn" type="button">Download CSV</button>
+            <span id="clearWrap" class="row"><button id="btnClear" class="btn" type="button">Clear stored readings</button></span>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="tabbar" aria-label="Screens">
+    <a href="#home" data-nav="home"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1Z"/></svg>Home</a>
+    <a href="#history" data-nav="history"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>History</a>
+    <a href="#alerts" data-nav="alerts"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>Alerts<span class="nav-badge" hidden></span></a>
+    <a href="#settings" data-nav="settings"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Settings</a>
+    <a href="#senior"><svg class="ico" viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M10 17h4"/></svg>Senior</a>
+  </nav>
 </div>
 
 <div id="senior" class="senior" data-level="0" hidden>
   <div class="sn-top">
     <div><div class="sn-time" id="snTime"></div><div class="sn-date" id="snDate"></div></div>
-    <button id="snExit" class="sn-exit" type="button">Hold to exit</button>
+    <button id="snExit" class="sn-exit" type="button"><span id="snExitLabel">Hold to exit</span></button>
   </div>
   <div class="sn-main" aria-live="polite">
     <div class="face-slot sn-face"></div>
@@ -599,6 +831,11 @@ body.senior-on{overflow:hidden}
     <button id="snHelpNo" class="sn-btn" type="button">No, cancel</button>
   </div>
   <p class="sn-note" id="snNote" aria-live="polite"></p>
+  <div class="sn-thanks" id="snThanks" hidden role="status">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44"/><path d="M30 52l14 14 27-30"/></svg>
+    <h2>Thank you!</h2>
+    <p>Your family has been told you are OK.</p>
+  </div>
   <div class="sn-start" id="snStart">
     <div class="face-slot sn-face"></div>
     <h2>HeatWatch</h2>
@@ -627,13 +864,17 @@ const CLOUD_DEFAULTS = {
 (() => {
 const $ = id => document.getElementById(id);
 const LV = ['Normal','Caution','Warning','Danger'];
+const CLV = ['Normal','Chilly','Cold','Very cold'];
+const sev = () => Math.max(S.level, S.cold);                 // how serious things are, hot or cold
+const levelLabel = () => S.cold > 0 ? CLV[S.cold] : LV[S.level];
+const ladIdx = () => S.cold > 0 ? 3 - S.cold : 3 + S.level;  // position on the 7-step ladder
 const MIN = 60e3, HR = 3600e3;
 
-const cfg = { caution:26, warn:29, danger:31, hyst:1, stale:15, unit:'C', ck:[0,180,60,30] };
+const cfg = { caution:26, warn:29, danger:31, chilly:18, cold:16, vcold:12, hyst:1, stale:15, unit:'C', ck:[0,180,60,30] };
 try { const s = JSON.parse(localStorage.getItem('heatwatch-cfg') || '{}'); Object.assign(cfg, s); } catch(e) {}
-function saveCfg(){ try { localStorage.setItem('heatwatch-cfg', JSON.stringify({caution:cfg.caution,warn:cfg.warn,danger:cfg.danger,stale:cfg.stale,unit:cfg.unit})); } catch(e) {} }
+function saveCfg(){ try { localStorage.setItem('heatwatch-cfg', JSON.stringify({caution:cfg.caution,warn:cfg.warn,danger:cfg.danger,chilly:cfg.chilly,cold:cfg.cold,vcold:cfg.vcold,stale:cfg.stale,unit:cfg.unit})); } catch(e) {} }
 
-const S = { readings:[], mode:'idle', level:0, warmSince:null, stale:false, acked:true, sound:false,
+const S = { readings:[], mode:'idle', level:0, cold:0, coldSince:null, demoKind:'heat', warmSince:null, stale:false, acked:true, sound:false,
   alerts:[], checkins:[], errors:0, bad:0, raw:[], lastArrival:0, simNow:0, quiet:false, flags:{},
   range:3*HR, lastBeep:0, arrivals:[] };
 
@@ -685,12 +926,12 @@ function timeAbove(rs, th){
 function cooldown(key, ms){ const n = nowD(); if (S.flags[key] == null || n - S.flags[key] > ms){ S.flags[key] = n; return true; } return false; }
 function addAlert(level, text, opts = {}){
   const ts = nowD();
-  S.alerts.unshift({ ts, level, text });
+  S.alerts.unshift({ ts, level, text, cold: !!opts.cold });
   if (S.alerts.length > 200) S.alerts.pop();
   if (S.quiet) return;
   notify(text);
-  if (S.mode === 'serial' && !C.serverAlerts) queueRow('alerts', { device: C.device, ts: new Date(ts).toISOString(), level, message: text });
-  if (opts.push !== false) sendPhone(level, text);
+  if (S.mode === 'serial' && (!C.serverAlerts || opts.cold)) queueRow('alerts', { device: C.device, ts: new Date(ts).toISOString(), level, message: text });
+  if (opts.push !== false) sendPhone(level, text, false, !!opts.cold);
 }
 function notify(text){
   try { if ('Notification' in window && Notification.permission === 'granted') new Notification('HeatWatch', { body: text }); } catch(e) {}
@@ -705,6 +946,13 @@ function targetLevel(v, cur){
   let l = cur; while (l > 0 && v < th[l] - cfg.hyst) l--;
   return Math.max(l, up);
 }
+function coldLevel(v, cur){
+  const th = [null, cfg.chilly, cfg.cold, cfg.vcold]; let down = 0;
+  for (let i = 1; i <= 3; i++) if (v < th[i]) down = i;
+  if (down >= cur) return down;
+  let l = cur; while (l > 0 && v >= th[l] + cfg.hyst) l--;   // only ease once it's 1 °C warmer
+  return Math.max(l, down);
+}
 function evaluate(){
   const now = nowD();
   const w = win(now - MIN, now); if (!w.length) return;
@@ -717,6 +965,17 @@ function evaluate(){
     S.level = next;
     addAlert(next, up ? `${LV[next]}: room reached ${fmt(v)} (1-min average)` : `Eased to ${LV[next]}: ${fmt(v)}`);
     if (up && next >= 2){ S.acked = false; if (!S.quiet) beep(); }
+  }
+  // too cold: uses air temperature, mirror of the heat scale
+  const va = avg(w.map(r => r.t));
+  const nc = S.level > 0 ? 0 : coldLevel(va, S.cold);
+  if (nc !== S.cold){
+    const down = nc > S.cold;
+    if (S.cold === 0 && nc > 0) S.coldSince = now;
+    if (nc === 0) S.coldSince = null;
+    S.cold = nc;
+    addAlert(nc, nc === 0 ? `Warmed up: room is back to ${fmt(va)}` : down ? `${CLV[nc]}: room fell to ${fmt(va)} (1-min average)` : `Warmed to ${CLV[nc]}: ${fmt(va)}`, { cold: true });
+    if (down && nc >= 2){ S.acked = false; if (!S.quiet) beep(); }
   }
   const sl = slope10(now);
   if (sl != null && sl >= 2 && cooldown('rise', 30*MIN)) addAlert(Math.max(2, S.level), `Temperature rising fast: ${fmtDelta(sl)} in 10 minutes`);
@@ -773,15 +1032,21 @@ let demoTimer = null;
 function demoValue(ts){
   const d = new Date(ts), hr = d.getHours() + d.getMinutes()/60 + d.getSeconds()/3600;
   const s = Math.sin((hr-10)/24*2*Math.PI);
+  if (S.demoKind === 'cold'){
+    const tc = 18.5 - 7.5*s + 0.4*Math.sin(ts/7e5) + (Math.random()-0.5)*0.4;
+    const hc = 46 + 6*s + (Math.random()-0.5)*2;
+    return [Math.round(tc*10)/10, Math.round(hc*10)/10];
+  }
   const t = 27 + 5*s + 0.5*Math.sin(ts/7e5) + (Math.random()-0.5)*0.4;
   const h = 52 - 12*s + (Math.random()-0.5)*2;
   return [Math.round(t*10)/10, Math.round(h*10)/10];
 }
 function resetData(){
-  Object.assign(S, { arrivals:[], readings:[], level:0, warmSince:null, stale:false, acked:true, alerts:[], checkins:[], errors:0, bad:0, raw:[], flags:{}, lastArrival:0 });
+  Object.assign(S, { arrivals:[], readings:[], level:0, cold:0, coldSince:null, warmSince:null, stale:false, acked:true, alerts:[], checkins:[], errors:0, bad:0, raw:[], flags:{}, lastArrival:0 });
 }
-function startDemo(){
+function startDemo(kind){
   stopSerial(); stopWatch();
+  S.demoKind = kind === 'cold' ? 'cold' : 'heat';
   S.mode = 'demo'; resetData();
   const base = new Date(); base.setHours(12,0,0,0);
   const end = base.getTime();
@@ -937,10 +1202,10 @@ function renderCloud(){
   if (C.serverAlerts) st.textContent += ' Phone alerts are sent by Supabase.';
 }
 
-async function sendPhone(level, text, force){
+async function sendPhone(level, text, force, cold){
   if (!C.ntfyTopic) return false;
   if (!force){
-    if (C.serverAlerts && !(S.mode === 'demo' && C.ntfyDemo)) return false;   // Supabase handles live alerts
+    if (C.serverAlerts && !cold && !(S.mode === 'demo' && C.ntfyDemo)) return false;   // Supabase handles live heat alerts
     if (level < +C.ntfyMin) return false;
     if (!(S.mode === 'serial' || (S.mode === 'demo' && C.ntfyDemo))) return false;
   }
@@ -948,10 +1213,10 @@ async function sendPhone(level, text, force){
     // No custom headers, so the browser sends a simple request (no CORS preflight)
     const res = await fetch('https://ntfy.sh/', { method: 'POST', body: JSON.stringify({
       topic: C.ntfyTopic,
-      title: `HeatWatch ${LV[level] || ''}: ${C.device}`,
+      title: `HeatWatch ${(cold ? CLV : LV)[level] || ''}: ${C.device}`,
       message: text,
       priority: level >= 3 ? 5 : level === 2 ? 4 : 3,
-      tags: level >= 3 ? ['rotating_light'] : ['thermometer']
+      tags: cold ? ['cold_face'] : level >= 3 ? ['rotating_light'] : ['thermometer']
     }) });
     return res.ok;
   } catch(e){ return false; }
@@ -1036,9 +1301,9 @@ async function loadHistory(){
     $('hT1k').textContent = 'Time at ' + fmt(cfg.caution, 0) + ' or above';
     $('hT3k').textContent = 'Time at ' + fmt(cfg.danger, 0) + ' or above';
     $('hCk').textContent = ck.length;
-    renderChart($('histChart'), rs, start, 24*HR, 'No readings saved for this day');
+    renderChart($('histChart'), rs, start, 24*HR, 'No readings saved for this day'); revealChart($('histChart'));
     $('histAlerts').innerHTML = al.length ? al.slice().reverse().map(x =>
-      `<li><time>${fmtTime(Date.parse(x.ts))}</time><span class="pill l${x.level}">${LV[x.level] || ''}</span><span class="txt">${esc(x.message || '')}</span></li>`).join('')
+      `<li><time>${fmtTime(Date.parse(x.ts))}</time><span class="pill ${isColdMsg(x.message) ? 'c' : 'l'}${x.level}">${(isColdMsg(x.message) ? CLV : LV)[x.level] || ''}</span><span class="txt">${esc(x.message || '')}</span></li>`).join('')
       : '<li><span></span><span></span><span class="txt muted">No alerts on this day.</span></li>';
   } catch(e){
     msg.textContent = 'Could not load history: ' + (e.message || e) + '. Check that the tables exist (see SETUP.md).';
@@ -1047,15 +1312,17 @@ async function loadHistory(){
 }
 
 /* ---------- 7-day strip of mini clovers ---------- */
-const WEEK = { days: [], state: {} };
+const WEEK = { days: [], state: {}, cold: {} };
+const isColdMsg = m => /^(Chilly|Cold|Very cold|Warmed)/.test(m || '');
 const dayKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 function renderWeek(){
   const box = $('week'); if (!box) return;
   const sel = $('histDate').value, today = dayKey(new Date());
   box.innerHTML = WEEK.days.map(d => {
     const k = dayKey(d), st = WEEK.state[k];
-    const cls = st == null ? '' : ' lv' + Math.min(3, st);
-    const desc = st == null ? 'no saved data' : st === 0 ? 'no heat alerts' : ['', 'caution', 'warning', 'danger'][Math.min(3, st)] + ' reached';
+    const kc = WEEK.cold[k] || 0;
+    const cls = st == null ? '' : st > 0 ? ' lv' + Math.min(3, st) : kc > 0 ? ' kv' + Math.min(3, kc) : ' lv0';
+    const desc = st == null ? 'no saved data' : st > 0 ? ['', 'caution', 'warning', 'danger'][Math.min(3, st)] + ' reached' : kc > 0 ? CLV[Math.min(3, kc)].toLowerCase() + ' reached' : 'no alerts';
     const label = k === today ? 'TODAY' : d.toLocaleDateString([], { weekday:'short' }).toUpperCase();
     return `<button type="button" class="wday" data-day="${k}" aria-pressed="${k === sel}" aria-label="${d.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' })}, ${desc}">`
       + `<span class="wl">${label}</span><svg class="minic${cls}" viewBox="0 0 30 30" aria-hidden="true"><circle class="c1" cx="15" cy="9" r="7"/><circle class="c2" cx="8.5" cy="20" r="7"/><circle class="c3" cx="21.5" cy="20" r="7"/></svg></button>`;
@@ -1064,22 +1331,55 @@ function renderWeek(){
 }
 async function loadWeek(){
   const today = new Date(); today.setHours(0,0,0,0);
-  WEEK.days = []; WEEK.state = {};
+  WEEK.days = []; WEEK.state = {}; WEEK.cold = {};
   for (let i = 6; i >= 0; i--){ const d = new Date(today); d.setDate(d.getDate() - i); WEEK.days.push(d); }
   renderWeek();
   if (!sb) return;
   try {
     const end = new Date(today); end.setDate(end.getDate() + 1);
     const [al, ...pres] = await Promise.all([
-      fetchAll('alerts', 'ts,level', WEEK.days[0].toISOString(), end.toISOString()),
+      fetchAll('alerts', 'ts,level,message', WEEK.days[0].toISOString(), end.toISOString()),
       ...WEEK.days.map(d => { const n = new Date(d); n.setDate(n.getDate() + 1);
         return sb.from('readings').select('ts').eq('device', C.device).gte('ts', d.toISOString()).lt('ts', n.toISOString()).limit(1); })
     ]);
     WEEK.days.forEach((d, i) => { const p = pres[i]; if (p && !p.error && p.data && p.data.length) WEEK.state[dayKey(d)] = 0; });
-    for (const a of al){ const k = dayKey(new Date(a.ts)); WEEK.state[k] = Math.max(WEEK.state[k] ?? 0, a.level | 0); }
+    for (const a of al){ const k = dayKey(new Date(a.ts));
+      if (isColdMsg(a.message)){ WEEK.cold[k] = Math.max(WEEK.cold[k] ?? 0, a.level | 0); WEEK.state[k] = WEEK.state[k] ?? 0; }
+      else WEEK.state[k] = Math.max(WEEK.state[k] ?? 0, a.level | 0); }
   } catch(e) {}
   renderWeek();
 }
+
+/* ---------- screens ---------- */
+let VIEW = 'start';
+const VIEWS = { home: '', history: 'History', alerts: 'Alerts and care', settings: 'Settings' };
+const SUBS = { home: "Here's how the room is doing.", history: 'Look back at any day this week.', alerts: 'What happened today, and what to watch for.', settings: 'Alert levels, cloud saving and phone alerts.' };
+const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; };
+function revealChart(el){ if (!el) return; el.classList.remove('reveal'); void el.offsetWidth; el.classList.add('reveal'); }
+function showView(v){
+  const inApp = Object.prototype.hasOwnProperty.call(VIEWS, v);
+  const changed = v !== VIEW;
+  VIEW = inApp ? v : 'start';
+  $('landing').hidden = inApp; $('app').hidden = !inApp;
+  if (inApp){
+    document.querySelectorAll('.view').forEach(x => x.classList.toggle('active', x.dataset.view === v));
+    document.querySelectorAll('[data-nav]').forEach(a => { if (a.dataset.nav === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    $('viewTitle').textContent = v === 'home' ? greeting() : VIEWS[v];
+    $('viewSub').textContent = SUBS[v];
+    if (v === 'alerts') S.seenAlerts = S.alerts.length;
+    if (v === 'history' && sb && !HIST.loaded){ HIST.loaded = true; loadHistory(); }
+    if (v === 'home' && changed) revealChart($('chart'));
+  }
+  if (changed) window.scrollTo(0, 0);
+  render();
+}
+function route(){
+  const h = location.hash.replace('#', '');
+  if (h === 'senior'){ if (VIEW === 'start') showView('home'); openSenior(); return; }
+  if (SN.on) closeSenior();
+  showView(h);
+}
+const HIST = { loaded: false };
 
 function fillCloudForm(){
   $('sbUrl').value = C.sbUrl || ''; $('sbKey').value = C.sbKey || ''; $('devName').value = C.device || '';
@@ -1095,6 +1395,12 @@ const SN_SAY = [
   'Close the blinds and drink a glass of water.',
   'Please move to a cooler room and drink some water.',
   'Move somewhere cool now. Your family will be alerted.'];
+const SN_WORD_C = ['Comfortable', 'A little chilly', 'Cold', 'Very cold'];
+const SN_SAY_C = ['', 'Put on a warm layer and have a hot drink.', 'Turn up the heat and wrap up warm.', 'Warm up now. Your family will be alerted.'];
+const SN_SPEAK_C = ['The room has warmed up. It is comfortable again.',
+  'It is a little chilly in here. Please put on a sweater and have a warm drink.',
+  'It is cold in here. Please turn up the heat, and wrap up in a blanket.',
+  'It is dangerously cold. Please warm up right now. Your family will be alerted.'];
 const SN_SPEAK = [
   'The room has cooled down. It is comfortable again.',
   'It is getting warm in here. Please close the blinds and drink a glass of water.',
@@ -1128,6 +1434,7 @@ function openSenior(){
   $('senior').hidden = false;
   document.body.classList.add('senior-on');
   $('snStart').hidden = SN.started;
+  $('snThanks').hidden = true; clearTimeout(SN.okT);
   renderSenior();
   ($('snStart').hidden ? $('snOk') : $('snStartBtn')).focus();
 }
@@ -1136,7 +1443,7 @@ function closeSenior(){
   $('senior').hidden = true;
   document.body.classList.remove('senior-on');
   try { speechSynthesis.cancel(); } catch(e) {}
-  if (location.hash === '#senior') history.replaceState(null, '', location.pathname + location.search);
+  if (location.hash === '#senior'){ history.replaceState(null, '', location.pathname + location.search + '#home'); showView('home'); }
   render();
 }
 
@@ -1156,25 +1463,28 @@ function renderSenior(){
     $('snTemp').textContent = '--';
     $('snSay').textContent = 'Waiting for the first reading.';
   } else {
-    el.dataset.level = S.level;
-    $('snWord').textContent = SN_WORD[S.level];
+    el.dataset.level = S.cold > 0 ? 'c' + S.cold : S.level;
+    $('snWord').textContent = S.cold > 0 ? SN_WORD_C[S.cold] : SN_WORD[S.level];
     $('snTemp').textContent = conv(r.t).toFixed(0) + '°';
-    $('snSay').textContent = SN_SAY[S.level];
+    $('snSay').textContent = S.cold > 0 ? SN_SAY_C[S.cold] : SN_SAY[S.level];
   }
 
   if ($('snWord').textContent !== SN.shownWord){ SN.shownWord = $('snWord').textContent; fadeSwap($('snWord')); fadeSwap($('snSay')); }
   const t = Date.now();
   if (SN.started && r && !S.stale){
-    if (SN.lastLevel === null) SN.lastLevel = S.level;
-    if (S.level !== SN.lastLevel){
-      if (S.level > SN.lastLevel || S.level === 0) say(SN_SPEAK[S.level], S.level >= 3);
-      if (S.level === 3) SN.lastDangerSay = t;
-      SN.lastLevel = S.level;
+    const k = S.cold > 0 ? -S.cold : S.level;          // negative = too cold, positive = too hot
+    if (SN.lastLevel === null) SN.lastLevel = k;
+    if (k !== SN.lastLevel){
+      const worse = Math.abs(k) > Math.abs(SN.lastLevel) || (k !== 0 && Math.sign(k) !== Math.sign(SN.lastLevel));
+      if (k === 0) say(SN.lastLevel < 0 ? SN_SPEAK_C[0] : SN_SPEAK[0]);
+      else if (worse) say(k < 0 ? SN_SPEAK_C[-k] : SN_SPEAK[k], Math.abs(k) >= 3);
+      if (Math.abs(k) === 3) SN.lastDangerSay = t;
+      SN.lastLevel = k;
     }
     // repeat the danger message every 5 minutes until they tap "I'm OK"
-    if (S.level === 3 && t > SN.okUntil && t - SN.lastDangerSay > 5*MIN){
+    if (Math.abs(k) === 3 && t > SN.okUntil && t - SN.lastDangerSay > 5*MIN){
       SN.lastDangerSay = t;
-      say(SN_SPEAK[3] + ' Tap I am OK once you are somewhere cool.', true);
+      say(k < 0 ? SN_SPEAK_C[3] + ' Tap I am OK once you are warm.' : SN_SPEAK[3] + ' Tap I am OK once you are somewhere cool.', true);
     }
     // water reminder every hour while it's warm (follows the data clock, so the demo shows it quickly)
     if (S.level >= 1 && !SN.waterShown && nowD() - SN.lastWater > HR){
@@ -1199,6 +1509,14 @@ function toast(t){ const el = $('toast'); el.textContent = t; el.hidden = false;
 let pending = false;
 function schedule(){ if (pending) return; pending = true; requestAnimationFrame(() => { pending = false; render(); }); }
 
+function coldText(l){
+  return [
+    '',
+    'A bit chilly. Close windows, offer a warm drink and an extra layer. Older adults should be kept at 18 °C or warmer.',
+    'Cold. Turn up the heating, use blankets and warm layers, and offer hot drinks and food. Check in every hour.',
+    `Dangerously cold for older adults. Warm the room now and check on them in person within ${cfg.ck[3]} minutes. Watch for shivering, confusion or drowsiness, and see the warning signs.`
+  ][l];
+}
 function actionText(l){
   return [
     'The room is comfortable. No action needed.',
@@ -1213,7 +1531,7 @@ function render(){
   const now = nowD(), r = last();
   const src = $('src');
   src.dataset.mode = S.mode;
-  src.textContent = S.mode === 'demo' ? 'Demo data (simulated heat wave)' : S.mode === 'serial' ? 'Live from Arduino' : S.mode === 'watch' ? 'Watching ' + C.device + ' from cloud' : 'Not connected';
+  src.textContent = S.mode === 'demo' ? (S.demoKind === 'cold' ? 'Demo data (simulated cold snap)' : 'Demo data (simulated heat wave)') : S.mode === 'serial' ? 'Live from Arduino' : S.mode === 'watch' ? 'Watching ' + C.device + ' from cloud' : 'Not connected';
   $('btnWatch').hidden = !sb || S.mode === 'watch';
   renderCloud();
   $('btnConnect').textContent = S.mode === 'serial' ? 'Disconnect' : 'Connect Arduino';
@@ -1222,7 +1540,7 @@ function render(){
   // status
   const st = $('status');
   st.dataset.level = S.stale ? 'off' : S.level;
-  const moodKey = S.stale ? 'off' : (r ? String(S.level) : 'idle');
+  const moodKey = S.stale ? 'off' : (r ? (S.cold > 0 ? 'c' + S.cold : String(S.level)) : 'idle');
   if (document.documentElement.dataset.level !== moodKey) document.documentElement.dataset.level = moodKey;
   if (S.stale){
     $('levelName').textContent = 'Sensor offline';
@@ -1231,18 +1549,21 @@ function render(){
     $('levelName').textContent = S.mode === 'serial' ? 'Waiting' : 'Not connected';
     $('levelAction').textContent = S.mode === 'serial' ? 'Connected. Waiting for the first reading from the sensor.' : 'Connect the Arduino or run the demo.';
   } else {
-    $('levelName').textContent = LV[S.level];
-    $('levelAction').textContent = actionText(S.level);
+    $('levelName').textContent = levelLabel();
+    $('levelAction').textContent = S.cold > 0 ? coldText(S.cold) : actionText(S.level);
   }
   if ($('levelName').textContent !== S.shownName){ S.shownName = $('levelName').textContent; fadeSwap($('levelName')); fadeSwap($('levelAction')); }
   $('todayDate').textContent = new Date().toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
   const th = thresholds();
-  $('r0').textContent = 'below ' + fmt(cfg.caution,0);
+  $('rc3').textContent = 'below ' + fmt(cfg.vcold,0);
+  $('rc2').textContent = fmt(cfg.vcold,0) + '–' + fmt(cfg.cold,0);
+  $('rc1').textContent = fmt(cfg.cold,0) + '–' + fmt(cfg.chilly,0);
+  $('r0').textContent = fmt(cfg.chilly,0) + '–' + fmt(cfg.caution,0);
   $('r1').textContent = fmt(cfg.caution,0) + '–' + fmt(cfg.warn,0);
   $('r2').textContent = fmt(cfg.warn,0) + '–' + fmt(cfg.danger,0);
   $('r3').textContent = fmt(cfg.danger,0) + ' and up';
-  [...$('ladder').children].forEach((el,i) => el.classList.toggle('on', !S.stale && !!r && i === S.level));
-  $('btnAck').hidden = S.acked || !(S.level >= 2 || S.stale);
+  [...$('ladder').children].forEach((el,i) => el.classList.toggle('on', !S.stale && !!r && i === ladIdx()));
+  $('btnAck').hidden = S.acked || !(sev() >= 2 || S.stale);
   $('btnSound').textContent = S.sound ? 'Alarm sound on' : 'Turn on alarm sound';
   $('btnSound').setAttribute('aria-pressed', S.sound);
 
@@ -1262,17 +1583,18 @@ function render(){
 
   // check-in
   const lastCk = S.checkins[S.checkins.length-1];
-  const intv = cfg.ck[S.level];
+  const intv = cfg.ck[sev()];
   const due = $('ckDue');
-  if (!S.level || !r){ due.textContent = 'Not needed right now'; due.classList.remove('over'); $('ckRule').textContent = 'Check-ins start once the room reaches Caution.'; }
+  if (!sev() || !r){ due.textContent = 'Not needed right now'; due.classList.remove('over'); $('ckRule').textContent = 'Check-ins start once the room gets too warm or too cold.'; $('ckBar').style.width = '0%'; }
   else {
-    const warm = S.warmSince ?? now;
+    const warm = (S.cold > 0 ? S.coldSince : S.warmSince) ?? now;
     const dueAt = lastCk != null && lastCk >= warm ? lastCk + intv*MIN : warm;
     const left = dueAt - now;
+    $('ckBar').style.width = Math.max(0, Math.min(100, 100 - left / (intv*MIN) * 100)).toFixed(1) + '%';
     if (left <= 0){ due.textContent = left > -MIN ? 'Check-in due now' : 'Overdue by ' + fmtDur(-left); due.classList.add('over');
-      if (cooldown('ckOver', 30*MIN)) addAlert(S.level, 'Caregiver check-in is overdue'); }
+      if (cooldown('ckOver', 30*MIN)) addAlert(sev(), 'Caregiver check-in is overdue', { cold: S.cold > 0 }); }
     else { due.textContent = 'Next check-in in ' + fmtDur(left); due.classList.remove('over'); }
-    $('ckRule').textContent = `${LV[S.level]} level: check in every ${intv >= 60 ? intv/60 + (intv===60?' hour':' hours') : intv + ' minutes'}.`;
+    $('ckRule').textContent = `${levelLabel()} level: check in every ${intv >= 60 ? intv/60 + (intv===60?' hour':' hours') : intv + ' minutes'}.`;
   }
   $('ckList').innerHTML = S.checkins.slice(-3).reverse().map(t => `<li>Checked in at ${fmtTime(t)}</li>`).join('') || '<li>No check-ins logged yet</li>';
 
@@ -1301,16 +1623,38 @@ function render(){
   $('sT1').textContent = d24.length ? fmtDur(timeAbove(d24, cfg.caution)) : '--';
   $('sT3').textContent = d24.length ? fmtDur(timeAbove(d24, cfg.danger)) : '--';
   $('sT1k').textContent = 'Time at ' + fmt(cfg.caution,0) + ' or above';
-  $('sT3k').textContent = 'Time at ' + fmt(cfg.danger,0) + ' or above';
+  $('sT3k').textContent = 'spent at ' + fmt(cfg.danger,0) + ' or above';
 
   // alerts
   $('alCount').textContent = S.alerts.length ? S.alerts.length + ' total' : '';
   $('alerts').innerHTML = S.alerts.length ? S.alerts.slice(0, 40).map(x =>
-    `<li><time>${fmtTime(x.ts)}</time><span class="pill l${x.level}">${LV[x.level]}</span><span class="txt">${esc(x.text)}</span></li>`).join('')
+    `<li><time>${fmtTime(x.ts)}</time><span class="pill ${x.cold ? 'c' : 'l'}${x.level}">${(x.cold ? CLV : LV)[x.level]}</span><span class="txt">${esc(x.text)}</span></li>`).join('')
     : '<li><span></span><span></span><span class="txt muted">No alerts yet.</span></li>';
 
+  // sliding level indicator
+  const ind = $('ladderInd'), onRung = $('ladder').children[ladIdx()];
+  if (r && !S.stale && onRung && onRung.offsetWidth){
+    ind.style.opacity = '1'; ind.style.width = onRung.offsetWidth + 'px'; ind.style.transform = `translateX(${onRung.offsetLeft - 4}px)`;
+  } else ind.style.opacity = '0';
+  // mirrors on the sidebar and welcome screen
+  const tNow = r && !S.stale ? fmt(r.t) : '--';
+  $('ssWord').textContent = $('levelName').textContent; $('ssTemp').textContent = tNow;
+  $('lsWord').textContent = $('levelName').textContent; $('lsTemp').textContent = tNow; $('lsMode').textContent = src.textContent;
+  $('landWatch').hidden = !sb;
+  // alerts screen
+  const cnt = {}; S.alerts.forEach(a => { const k = (a.cold ? 'c' : 'l') + a.level; cnt[k] = (cnt[k] || 0) + 1; });
+  $('alSum').innerHTML = ['l3','l2','l1','c3','c2','c1'].filter(k => cnt[k]).map(k => `<span class="pill ${k}">${(k[0] === 'c' ? CLV : LV)[+k[1]]} · ${cnt[k]}</span>`).join('');
+  $('alerts').hidden = !S.alerts.length; $('alertsEmpty').hidden = !!S.alerts.length;
+  if (VIEW === 'alerts') S.seenAlerts = S.alerts.length;
+  const unseen = S.alerts.length - Math.min(S.seenAlerts || 0, S.alerts.length);
+  document.querySelectorAll('.nav-badge').forEach(b => { const t = unseen > 9 ? '9+' : String(unseen); if (b.textContent !== t) b.textContent = t; b.hidden = unseen <= 0; });
+  // history empty state
+  const hb = $('histBody').hidden;
+  $('histEmpty').hidden = !hb;
+  $('histSetup').hidden = !!sb;
+  if (sb){ $('histEmptyTitle').textContent = 'Pick a day'; $('histEmptyText').textContent = 'Tap a day above to see its temperature, alerts and check-ins.'; }
   renderSenior();
-  if (!SN.on) drawChart();
+  if (!SN.on && VIEW === 'home') drawChart();
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -1321,7 +1665,7 @@ function drawChart(){
 }
 function renderChart(el, rs, from, range, emptyText){
   const W = Math.max(280, el.clientWidth || 600);
-  const H = Math.round(Math.max(230, Math.min(330, W*0.42)));
+  const H = Math.max(200, Math.round(el.clientHeight || Math.min(330, W*0.42)));
   const P = { l:40, r:16, t:12, b:26 };
   const now = from + range;
   if (!rs.length){ el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><text class="c-empty" x="${W/2}" y="${H/2}" text-anchor="middle">${esc(emptyText)}</text></svg>`; return; }
@@ -1348,6 +1692,7 @@ function renderChart(el, rs, from, range, emptyText){
   // zone bands
   const top = P.t;
   const band = (a, b, cls) => { const ya = Math.max(top, Math.min(yb, Y(b))), yb2 = Math.max(top, Math.min(yb, Y(a))); if (yb2 > ya) s += `<rect class="${cls}" x="${x0}" y="${ya}" width="${x1-x0}" height="${yb2-ya}"/>`; };
+  band(cfg.cold, cfg.chilly, 'c-k1'); band(cfg.vcold, cfg.cold, 'c-k2'); band(-1e3, cfg.vcold, 'c-k3');
   band(cfg.caution, cfg.warn, 'c-b1'); band(cfg.warn, cfg.danger, 'c-b2'); band(cfg.danger, 1e3, 'c-b3');
 
   // grid + y labels
@@ -1365,6 +1710,10 @@ function renderChart(el, rs, from, range, emptyText){
     s += `<line class="c-grid" x1="${x}" x2="${x}" y1="${yb}" y2="${yb+4}"/><text class="c-axis" x="${x}" y="${H-6}" text-anchor="middle">${tLabel(t)}</text>`;
   }
   // threshold lines
+  [[cfg.chilly,1],[cfg.cold,2],[cfg.vcold,3]].forEach(([v,i]) => {
+    const y = Y(v); if (y < top || y > yb) return;
+    s += `<line class="c-th c-tk${i}" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="c-thl c-tkl${i}" x="${x1-4}" y="${y+13}" text-anchor="end">${CLV[i]} ${fmt(v,0)}</text>`;
+  });
   [[cfg.caution,1],[cfg.warn,2],[cfg.danger,3]].forEach(([v,i]) => {
     const y = Y(v); if (y < top || y > yb) return;
     s += `<line class="c-th c-th${i}" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="c-thl c-thl${i}" x="${x1-4}" y="${y-4}" text-anchor="end">${LV[i]} ${fmt(v,0)}</text>`;
@@ -1400,7 +1749,7 @@ setInterval(() => {
       beep();
     }
   }
-  if (S.sound && !S.acked && (S.level >= 2 || S.stale) && performance.now() - S.lastBeep > 45e3) beep();
+  if (S.sound && !S.acked && (sev() >= 2 || S.stale) && performance.now() - S.lastBeep > 45e3) beep();
   render();
 }, 1000);
 
@@ -1409,7 +1758,8 @@ $('btnConnect').onclick = async () => {
   if (S.mode === 'serial'){ await stopSerial(); S.mode = 'idle'; S.stale = false; render(); return; }
   connectSerial();
 };
-$('btnDemo').onclick = () => startDemo();
+$('btnDemo').onclick = () => startDemo(S.mode === 'demo' ? S.demoKind : 'heat');
+$('btnCold').onclick = () => startDemo('cold');
 $('btnSound').onclick = () => {
   S.sound = !S.sound;
   if (S.sound){ try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume(); S.lastBeep = 0; beep(); } catch(e){ S.sound = false; toast('This browser blocked sound.'); } }
@@ -1421,6 +1771,7 @@ $('btnCheck').onclick = () => {
   if (S.mode === 'serial' || S.mode === 'watch') { queueRow('checkins', { device: C.device, ts: new Date(nowD()).toISOString(), note: S.mode === 'watch' ? 'from watcher' : 'from monitor' }); flush(); }
   addAlert(S.level, 'Caregiver check-in logged', { push: false }); S.flags.ckOver = null; toast('Check-in logged at ' + fmtTime(nowD())); render(); };
 function setRange(ms){
+  if (S.range !== ms) revealChart($('chart'));
   S.range = ms;
   document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.range === ms));
 }
@@ -1430,11 +1781,11 @@ function bindNum(id, key){
   el.onchange = () => {
     const v = parseFloat(el.value); if (!isFinite(v)) { el.value = cfg[key]; return; }
     const c = Object.assign({}, cfg, {[key]: v});
-    if (key !== 'stale' && !(c.caution < c.warn && c.warn < c.danger)){ toast('Thresholds must go up: caution, then warning, then danger.'); el.value = cfg[key]; return; }
+    if (key !== 'stale' && !(c.vcold < c.cold && c.cold < c.chilly && c.chilly < c.caution && c.caution < c.warn && c.warn < c.danger)){ toast('Levels must go up in order: very cold, cold, chilly, caution, warning, danger.'); el.value = cfg[key]; return; }
     cfg[key] = v; saveCfg(); evaluate(); render();
   };
 }
-bindNum('thC','caution'); bindNum('thW','warn'); bindNum('thD','danger'); bindNum('stale','stale');
+bindNum('thCh','chilly'); bindNum('thCo','cold'); bindNum('thVc','vcold'); bindNum('thC','caution'); bindNum('thW','warn'); bindNum('thD','danger'); bindNum('stale','stale');
 $('unit').value = cfg.unit;
 $('unit').onchange = e => { cfg.unit = e.target.value; saveCfg(); render(); };
 $('btnNotify').onclick = async () => {
@@ -1487,7 +1838,7 @@ $('btnTestPush').onclick = async () => {
 };
 // senior mode controls
 $('btnSenior').onclick = () => { location.hash = 'senior'; };
-window.addEventListener('hashchange', () => { if (location.hash === '#senior') openSenior(); else if (SN.on) closeSenior(); });
+window.addEventListener('hashchange', route);
 $('snStartBack').onclick = () => closeSenior();
 $('snStartBtn').onclick = async () => {
   SN.started = true;
@@ -1496,8 +1847,9 @@ $('snStartBtn').onclick = async () => {
   say('HeatWatch is on. I will let you know if the room gets too hot.', true);
   // On a separate tablet, show the live room from the cloud
   if (S.mode !== 'serial' && S.mode !== 'watch' && sb) await startWatch();
-  SN.lastWater = nowD(); SN.lastLevel = S.level; SN.lastDangerSay = Date.now();
+  SN.lastWater = nowD(); SN.lastLevel = S.cold > 0 ? -S.cold : S.level; SN.lastDangerSay = Date.now();
   if (last() && S.level >= 1) setTimeout(() => say(SN_SPEAK[S.level], S.level >= 3), 5000);
+  else if (last() && S.cold >= 1) setTimeout(() => say(SN_SPEAK_C[S.cold], S.cold >= 3), 5000);
   renderSenior();
   $('snOk').focus();
 };
@@ -1513,6 +1865,9 @@ $('snOk').onclick = () => {
   SN.okUntil = Date.now() + 15*MIN;
   say('Thank you. I have let your family know you are OK.', true);
   setNote('Your family has been told you are OK.');
+  $('snOk').classList.remove('done'); void $('snOk').offsetWidth; $('snOk').classList.add('done');
+  $('snThanks').hidden = false;
+  clearTimeout(SN.okT); SN.okT = setTimeout(() => { $('snThanks').hidden = true; if (SN.on) closeSenior(); }, 2200);
   render();
 };
 $('snHelp').onclick = () => {
@@ -1543,8 +1898,8 @@ $('snWaterDone').onclick = () => {
 };
 (() => {
   const ex = $('snExit'); let holdT = null;
-  const reset = () => { clearTimeout(holdT); ex.classList.remove('holding'); ex.textContent = 'Hold to exit'; };
-  ex.addEventListener('pointerdown', () => { ex.classList.add('holding'); ex.textContent = 'Keep holding…'; holdT = setTimeout(() => { reset(); closeSenior(); }, 1500); });
+  const reset = () => { clearTimeout(holdT); ex.classList.remove('holding'); $('snExitLabel').textContent = 'Hold to exit'; };
+  ex.addEventListener('pointerdown', () => { ex.classList.add('holding'); $('snExitLabel').textContent = 'Keep holding…'; holdT = setTimeout(() => { reset(); closeSenior(); }, 1500); });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => ex.addEventListener(ev, reset));
   ex.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeSenior(); } });
 })();
@@ -1558,7 +1913,12 @@ document.querySelectorAll('.face-slot').forEach(s => { s.innerHTML = document.qu
 $('histDate').addEventListener('change', renderWeek);
 loadWeek();
 startDemo();
-if (location.hash === '#senior') openSenior();
+// welcome screen shortcuts
+$('landConnect').onclick = () => { location.hash = 'home'; connectSerial(); };
+$('landWatch').onclick = () => { location.hash = 'home'; startWatch(); };
+$('landDemo').onclick = () => { startDemo('heat'); location.hash = 'home'; };
+$('landCold').onclick = () => { startDemo('cold'); location.hash = 'home'; };
+route();
 })();
 </script>
 </body>
