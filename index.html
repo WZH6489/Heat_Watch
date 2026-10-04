@@ -99,6 +99,36 @@ input[type=text].mono,input[type=password]{font-family:var(--f-data);font-size:.
 .check input{width:20px;height:20px}
 .sub-h{font-size:.95rem;font-weight:800;margin:6px 0 0}
 .chip[data-mode="watch"]{background:var(--ok-tint);color:var(--ok)}
+/* senior mode: one glanceable screen, readable from across the room */
+.senior{position:fixed;inset:0;z-index:50;--lv:var(--ok);--lvt:var(--ok-tint);background:var(--lvt);color:var(--ink);display:grid;grid-template-rows:auto 1fr auto auto auto;gap:16px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto}
+.senior[data-level="1"]{--lv:var(--cau);--lvt:var(--cau-tint)}
+.senior[data-level="2"]{--lv:var(--warn);--lvt:var(--warn-tint)}
+.senior[data-level="3"]{--lv:var(--dan);--lvt:var(--dan-tint);box-shadow:inset 0 0 0 10px var(--dan)}
+.senior[data-level="off"]{--lv:var(--off);--lvt:var(--off-tint)}
+body.senior-on{overflow:hidden}
+.sn-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.sn-time{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:clamp(1.6rem,4vw,2.4rem);font-weight:600;line-height:1.1}
+.sn-date{font-size:1.15rem;color:var(--muted)}
+.sn-exit{font:inherit;font-size:.9rem;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-height:44px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+.sn-exit.holding{border-color:var(--ink);color:var(--ink)}
+.sn-main{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px;min-height:0}
+.sn-word{font-size:clamp(2.4rem,9vw,5.5rem);font-weight:800;color:var(--lv);line-height:1.05;text-wrap:balance}
+.sn-temp{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:clamp(4rem,18vw,10rem);font-weight:600;line-height:1;letter-spacing:-.03em}
+.sn-say{margin:8px 0 0;font-size:clamp(1.3rem,3.6vw,2.1rem);font-weight:600;max-width:28ch;text-wrap:balance}
+.sn-actions{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sn-btn{font:inherit;font-size:clamp(1.4rem,4vw,2rem);font-weight:800;min-height:96px;border-radius:16px;border:3px solid var(--ink);background:var(--surface);color:var(--ink);cursor:pointer;padding:12px}
+.sn-btn:focus-visible,.sn-exit:focus-visible{outline:4px solid var(--accent);outline-offset:3px}
+.sn-ok{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.sn-help{background:var(--dan);border-color:var(--dan);color:var(--surface)}
+.sn-water{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--surface);border:3px solid var(--accent);border-radius:16px;padding:14px 18px;font-size:clamp(1.3rem,3.5vw,1.9rem);font-weight:800}
+.sn-small{min-height:64px;font-size:1.3rem}
+.sn-note{margin:0;text-align:center;font-size:1.25rem;font-weight:600;min-height:1.5em}
+.sn-start{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;text-align:center}
+.sn-start h2{font-size:clamp(2.4rem,8vw,4rem);font-weight:800}
+.sn-start p{font-size:1.4rem;max-width:30ch;margin:0}
+.sn-start .sn-btn{min-width:min(280px,100%)}
+.sn-link{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;font-size:1rem;min-height:44px;cursor:pointer}
+@media (max-width:520px){.sn-actions{grid-template-columns:1fr}.sn-btn{min-height:80px}}
 #histChart{width:100%;min-height:200px}
 #histChart svg{display:block;width:100%;height:auto}
 .hist-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px 18px}
@@ -205,6 +235,7 @@ footer p{margin:0 0 6px}
       <select id="baud"><option value="9600">9600 baud</option><option value="115200">115200 baud</option></select>
       <button id="btnConnect" class="btn primary" type="button">Connect Arduino</button>
       <button id="btnWatch" class="btn" type="button" hidden>Watch from cloud</button>
+      <button id="btnSenior" class="btn" type="button">Senior mode</button>
       <button id="btnDemo" class="btn" type="button">Restart demo</button>
     </div>
   </header>
@@ -377,6 +408,36 @@ footer p{margin:0 0 6px}
     <p>Levels use the higher of room temperature and feels-like temperature, averaged over the last minute. A level only drops once readings fall 1 °C below its threshold, so alerts don't flicker on and off.</p>
     <p>The DHT11 sensor is accurate to about ±2 °C. Place it at sitting height, away from windows, lamps, and the Arduino itself. This tool supports, and does not replace, regular in-person checks.</p>
   </footer>
+</div>
+<div id="senior" class="senior" data-level="0" hidden>
+  <div class="sn-top">
+    <div><div class="sn-time" id="snTime"></div><div class="sn-date" id="snDate"></div></div>
+    <button id="snExit" class="sn-exit" type="button">Hold to exit</button>
+  </div>
+  <div class="sn-main" aria-live="polite">
+    <div class="sn-word" id="snWord">Starting up</div>
+    <div class="sn-temp" id="snTemp">--</div>
+    <p class="sn-say" id="snSay"></p>
+  </div>
+  <div class="sn-water" id="snWater" hidden>
+    <span>Time for a glass of water</span>
+    <button id="snWaterDone" class="sn-btn sn-small" type="button">I drank some</button>
+  </div>
+  <div class="sn-actions" id="snActions">
+    <button id="snOk" class="sn-btn sn-ok" type="button">I'm OK</button>
+    <button id="snHelp" class="sn-btn sn-help" type="button">I need help</button>
+  </div>
+  <div class="sn-actions" id="snConfirm" hidden>
+    <button id="snHelpYes" class="sn-btn sn-help" type="button">Yes, get help</button>
+    <button id="snHelpNo" class="sn-btn" type="button">No, cancel</button>
+  </div>
+  <p class="sn-note" id="snNote" aria-live="polite"></p>
+  <div class="sn-start" id="snStart">
+    <h2>HeatWatch</h2>
+    <p>Tap Start. The screen will stay on and speak up if the room gets too hot.</p>
+    <button id="snStartBtn" class="sn-btn sn-ok" type="button">Start</button>
+    <button id="snStartBack" class="sn-link" type="button">Back to caregiver view</button>
+  </div>
 </div>
 <div id="toast" role="status" hidden></div>
 
@@ -759,7 +820,16 @@ async function startWatch(){
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'readings', filter: 'device=eq.' + C.device },
         p => { const r = p.new; addReading(r.temp_c, r.humidity, Date.parse(r.ts)); })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'checkins', filter: 'device=eq.' + C.device },
-        p => { const t = Date.parse(p.new.ts); if (!S.checkins.some(x => Math.abs(x - t) < 2000)) { S.checkins.push(t); addAlert(S.level, 'Check-in logged by another caregiver', { push: false }); schedule(); } })
+        p => {
+          const t = Date.parse(p.new.ts);
+          if (!S.checkins.some(x => Math.abs(x - t) < 2000)) {
+            S.checkins.push(t);
+            const fromSenior = (p.new.note || '').startsWith('senior');
+            addAlert(S.level, fromSenior ? 'They tapped "I\'m OK" on the tablet' : 'Check-in logged by another caregiver', { push: false });
+            if (!fromSenior) say('Your family just checked on you.');
+            schedule();
+          }
+        })
     .subscribe(status => {
       if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setMsg('Live updates are not working. In Supabase, make sure Realtime is enabled for the readings table (see SETUP.md).');
     });
@@ -811,6 +881,111 @@ function fillCloudForm(){
   $('sbUrl').value = C.sbUrl || ''; $('sbKey').value = C.sbKey || ''; $('devName').value = C.device || '';
   $('ntfyTopic').value = C.ntfyTopic || ''; $('ntfyMin').value = String(C.ntfyMin || 2); $('ntfyDemo').checked = !!C.ntfyDemo; $('serverAlerts').checked = !!C.serverAlerts;
 }
+
+/* ---------- senior mode ---------- */
+const SN = { on:false, started:false, lastLevel:null, okUntil:0, lastWater:0, waterShown:false,
+  lastDangerSay:0, msg:'', msgUntil:0, voice:null, confirmT:null };
+const SN_WORD = ['Comfortable', 'Getting warm', 'Hot', 'Dangerously hot'];
+const SN_SAY = [
+  'The room is a comfortable temperature.',
+  'Close the blinds and drink a glass of water.',
+  'Please move to a cooler room and drink some water.',
+  'Move somewhere cool now. Your family will be alerted.'];
+const SN_SPEAK = [
+  'The room has cooled down. It is comfortable again.',
+  'It is getting warm in here. Please close the blinds and drink a glass of water.',
+  'It is hot in here. Please move to a cooler room, and drink some water.',
+  'It is dangerously hot. Please move somewhere cool right now. Your family will be alerted.'];
+
+const quietHours = () => { const h = new Date().getHours(); return h >= 22 || h < 8; };   // only urgent messages at night
+function pickVoice(){
+  try {
+    const vs = speechSynthesis.getVoices();
+    SN.voice = vs.find(v => /^en/i.test(v.lang) && /natural|enhanced|premium|samantha|google/i.test(v.name))
+            || vs.find(v => /^en/i.test(v.lang)) || null;
+  } catch(e) {}
+}
+if ('speechSynthesis' in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function say(text, urgent){
+  if (!SN.on || !SN.started || !('speechSynthesis' in window)) return;
+  if (!urgent && quietHours()) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85; u.volume = 1; u.lang = 'en-CA';
+    if (SN.voice) u.voice = SN.voice;
+    speechSynthesis.speak(u);
+  } catch(e) {}
+}
+function setNote(text, ms){ SN.msg = text; SN.msgUntil = Date.now() + (ms || 2*MIN); renderSenior(); }
+
+function openSenior(){
+  SN.on = true;
+  $('senior').hidden = false;
+  document.body.classList.add('senior-on');
+  $('snStart').hidden = SN.started;
+  renderSenior();
+  ($('snStart').hidden ? $('snOk') : $('snStartBtn')).focus();
+}
+function closeSenior(){
+  SN.on = false;
+  $('senior').hidden = true;
+  document.body.classList.remove('senior-on');
+  try { speechSynthesis.cancel(); } catch(e) {}
+  if (location.hash === '#senior') history.replaceState(null, '', location.pathname + location.search);
+  render();
+}
+
+function renderSenior(){
+  if (!SN.on) return;
+  const el = $('senior'), r = last(), clock = new Date();
+  $('snTime').textContent = clock.toLocaleTimeString([], { hour:'numeric', minute:'2-digit' });
+  $('snDate').textContent = clock.toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
+  if (S.stale){
+    el.dataset.level = 'off';
+    $('snWord').textContent = 'Sensor not responding';
+    $('snTemp').textContent = '--';
+    $('snSay').textContent = 'The room sensor has stopped sending readings. Your family will be alerted.';
+  } else if (!r){
+    el.dataset.level = 'off';
+    $('snWord').textContent = 'Starting up';
+    $('snTemp').textContent = '--';
+    $('snSay').textContent = 'Waiting for the first reading.';
+  } else {
+    el.dataset.level = S.level;
+    $('snWord').textContent = SN_WORD[S.level];
+    $('snTemp').textContent = conv(r.t).toFixed(0) + '°';
+    $('snSay').textContent = SN_SAY[S.level];
+  }
+
+  const t = Date.now();
+  if (SN.started && r && !S.stale){
+    if (SN.lastLevel === null) SN.lastLevel = S.level;
+    if (S.level !== SN.lastLevel){
+      if (S.level > SN.lastLevel || S.level === 0) say(SN_SPEAK[S.level], S.level >= 3);
+      if (S.level === 3) SN.lastDangerSay = t;
+      SN.lastLevel = S.level;
+    }
+    // repeat the danger message every 5 minutes until they tap "I'm OK"
+    if (S.level === 3 && t > SN.okUntil && t - SN.lastDangerSay > 5*MIN){
+      SN.lastDangerSay = t;
+      say(SN_SPEAK[3] + ' Tap I am OK once you are somewhere cool.', true);
+    }
+    // water reminder every hour while it's warm (follows the data clock, so the demo shows it quickly)
+    if (S.level >= 1 && !SN.waterShown && nowD() - SN.lastWater > HR){
+      SN.waterShown = true; $('snWater').hidden = false;
+      say('Time for a glass of water.');
+    }
+    if (S.level === 0 && SN.waterShown){ SN.waterShown = false; $('snWater').hidden = true; }
+  }
+
+  const note = $('snNote');
+  if (SN.msg && t < SN.msgUntil) note.textContent = SN.msg;
+  else if (S.checkins.length) note.textContent = 'Last check-in at ' + fmtTime(S.checkins[S.checkins.length-1]);
+  else note.textContent = '';
+}
+
+function cancelHelp(){ clearTimeout(SN.confirmT); $('snActions').hidden = false; $('snConfirm').hidden = true; }
 
 /* ---------- UI helpers ---------- */
 function setMsg(t){ const m = $('connMsg'); m.hidden = !t; m.textContent = t || ''; }
@@ -925,7 +1100,8 @@ function render(){
     `<li><time>${fmtTime(x.ts)}</time><span class="pill l${x.level}">${LV[x.level]}</span><span class="txt">${esc(x.text)}</span></li>`).join('')
     : '<li><span></span><span></span><span class="txt muted">No alerts yet.</span></li>';
 
-  drawChart();
+  renderSenior();
+  if (!SN.on) drawChart();
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -1099,11 +1275,77 @@ $('btnTestPush').onclick = async () => {
   const ok = await sendPhone(3, 'Test alert. If you can read this, phone alerts are working.', true);
   toast(ok ? 'Test alert sent to topic ' + C.ntfyTopic : 'Could not reach ntfy.sh. Check the internet connection.');
 };
+// senior mode controls
+$('btnSenior').onclick = () => { location.hash = 'senior'; };
+window.addEventListener('hashchange', () => { if (location.hash === '#senior') openSenior(); else if (SN.on) closeSenior(); });
+$('snStartBack').onclick = () => closeSenior();
+$('snStartBtn').onclick = async () => {
+  SN.started = true;
+  $('snStart').hidden = true;
+  requestWake();
+  say('HeatWatch is on. I will let you know if the room gets too hot.', true);
+  // On a separate tablet, show the live room from the cloud
+  if (S.mode !== 'serial' && S.mode !== 'watch' && sb) await startWatch();
+  SN.lastWater = nowD(); SN.lastLevel = S.level; SN.lastDangerSay = Date.now();
+  if (last() && S.level >= 1) setTimeout(() => say(SN_SPEAK[S.level], S.level >= 3), 5000);
+  renderSenior();
+  $('snOk').focus();
+};
+$('snOk').onclick = () => {
+  const ts = nowD();
+  S.checkins.push(ts); S.flags.ckOver = null;
+  if (sb && (S.mode === 'serial' || S.mode === 'watch')) {
+    queueRow('checkins', { device: C.device, ts: new Date(ts).toISOString(), note: 'senior: I am OK' });
+    flush();
+  }
+  addAlert(S.level, 'They tapped "I\'m OK" on the tablet', { push: false });
+  sendPhone(0, 'They tapped "I\'m OK" on the HeatWatch tablet.', true);
+  SN.okUntil = Date.now() + 15*MIN;
+  say('Thank you. I have let your family know you are OK.', true);
+  setNote('Your family has been told you are OK.');
+  render();
+};
+$('snHelp').onclick = () => {
+  $('snActions').hidden = true; $('snConfirm').hidden = false;
+  $('snHelpYes').focus();
+  say('Do you want me to call for help? Tap yes, or no.', true);
+  clearTimeout(SN.confirmT); SN.confirmT = setTimeout(cancelHelp, 30000);
+};
+$('snHelpNo').onclick = () => { cancelHelp(); say('OK. No help request was sent.', true); $('snOk').focus(); };
+$('snHelpYes').onclick = async () => {
+  cancelHelp();
+  const msg = 'HELP REQUESTED. They pressed "I need help" on the HeatWatch tablet. Call them or go to them now.';
+  addAlert(3, 'Help requested from the tablet', { push: false });
+  if (sb) { queueRow('alerts', { device: C.device, ts: new Date().toISOString(), level: 3, message: msg }); flush(); }
+  setNote('Sending…');
+  const ok = await sendPhone(3, msg, true);
+  if (ok){
+    setNote('Help requested at ' + fmtTime(Date.now()) + '. Your family has been alerted.', 30*MIN);
+    say('Your family has been alerted, and help is on the way. If you feel very unwell, call 9 1 1.', true);
+  } else {
+    setNote('The alert could not be sent. Please call 911 or a family member.', 30*MIN);
+    say('I could not send the alert. Please call 9 1 1, or a family member.', true);
+  }
+};
+$('snWaterDone').onclick = () => {
+  SN.lastWater = nowD(); SN.waterShown = false; $('snWater').hidden = true;
+  say('Well done.', true);
+};
+(() => {
+  const ex = $('snExit'); let holdT = null;
+  const reset = () => { clearTimeout(holdT); ex.classList.remove('holding'); ex.textContent = 'Hold to exit'; };
+  ex.addEventListener('pointerdown', () => { ex.classList.add('holding'); ex.textContent = 'Keep holding…'; holdT = setTimeout(() => { reset(); closeSenior(); }, 1500); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => ex.addEventListener(ev, reset));
+  ex.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeSenior(); } });
+})();
+document.addEventListener('visibilitychange', () => { if (!document.hidden && SN.on && SN.started) requestWake(); });
+
 (() => { const d = new Date(); $('histDate').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 fillCloudForm();
 initCloud();
 
 startDemo();
+if (location.hash === '#senior') openSenior();
 })();
 </script>
 </body>
