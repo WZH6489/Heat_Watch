@@ -93,6 +93,17 @@ input[type=number]{width:5.5em;font-family:var(--f-data)}
 @keyframes numblip{0%{color:var(--accent)}100%{color:var(--ink)}}
 @media (prefers-reduced-motion:reduce){.live.blip,.big.blip{animation:none}}
 .c-pt{fill:var(--accent)}
+input[type=text],input[type=password],input[type=date]{font:inherit;font-size:.92rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:44px;width:100%;min-width:0}
+input[type=text].mono,input[type=password]{font-family:var(--f-data);font-size:.85rem}
+.check{display:flex;gap:8px;align-items:center;font-size:.92rem}
+.check input{width:20px;height:20px}
+.sub-h{font-size:.95rem;font-weight:800;margin:6px 0 0}
+.chip[data-mode="watch"]{background:var(--ok-tint);color:var(--ok)}
+#histChart{width:100%;min-height:200px}
+#histChart svg{display:block;width:100%;height:auto}
+.hist-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px 18px}
+.hist-stats .v{font-family:var(--f-data);font-variant-numeric:tabular-nums;font-size:1.2rem;font-weight:600}
+.hist-stats .k{font-size:.82rem;color:var(--muted)}
 .tile .sub{font-size:.88rem;color:var(--muted)}
 .tile .flag{font-size:.88rem;font-weight:600}
 
@@ -193,6 +204,7 @@ footer p{margin:0 0 6px}
       <label for="baud" class="sr">Baud rate</label>
       <select id="baud"><option value="9600">9600 baud</option><option value="115200">115200 baud</option></select>
       <button id="btnConnect" class="btn primary" type="button">Connect Arduino</button>
+      <button id="btnWatch" class="btn" type="button" hidden>Watch from cloud</button>
       <button id="btnDemo" class="btn" type="button">Restart demo</button>
     </div>
   </header>
@@ -274,6 +286,31 @@ footer p{margin:0 0 6px}
     </div>
   </section>
 
+  <section class="panel">
+    <div class="panel-head">
+      <h3>Saved history</h3>
+      <div class="row">
+        <label for="histDate" class="sr">Day</label>
+        <input id="histDate" type="date" style="width:auto">
+        <button id="btnHist" class="btn" type="button">Load day</button>
+      </div>
+    </div>
+    <p class="muted" id="histMsg" style="margin:0;font-size:.92rem">Readings saved to the cloud appear here. Pick a day and select Load day.</p>
+    <div id="histBody" hidden>
+      <div class="hist-stats">
+        <div><div class="v" id="hN">--</div><div class="k">Readings saved</div></div>
+        <div><div class="v" id="hAvg">--</div><div class="k">Average</div></div>
+        <div><div class="v" id="hMM">--</div><div class="k">Low / high</div></div>
+        <div><div class="v" id="hFeel">--</div><div class="k">Peak feels like</div></div>
+        <div><div class="v" id="hT1">--</div><div class="k" id="hT1k">Time at caution or above</div></div>
+        <div><div class="v" id="hT3">--</div><div class="k" id="hT3k">Time in danger zone</div></div>
+        <div><div class="v" id="hCk">--</div><div class="k">Check-ins</div></div>
+      </div>
+      <div id="histChart" style="margin-top:12px"></div>
+      <ul class="alerts" id="histAlerts" style="margin-top:8px"></ul>
+    </div>
+  </section>
+
   <div class="two">
     <section class="panel">
       <div class="panel-head"><h3>Alerts</h3><span class="muted" id="alCount" style="font-size:.88rem"></span></div>
@@ -313,6 +350,21 @@ footer p{margin:0 0 6px}
       <div class="field"><label for="stale">Sensor offline after (seconds)</label><input id="stale" type="number" step="1" min="5" max="300"></div>
       <div class="field"><label>Browser notifications</label><button id="btnNotify" class="btn" type="button">Allow notifications</button><span class="hint" id="notifyHint">Pop-up alerts when the level rises</span></div>
     </div>
+    <h4 class="sub-h">Cloud saving and phone alerts</h4>
+    <div class="row" style="font-size:.92rem"><span class="pill idle" id="cloudPill">Off</span><span id="cloudStatus" class="muted">Not set up</span></div>
+    <div class="settings">
+      <div class="field"><label for="sbUrl">Supabase project URL</label><input id="sbUrl" type="text" class="mono" placeholder="https://abcd1234.supabase.co" autocomplete="off"></div>
+      <div class="field"><label for="sbKey">Supabase anon key</label><input id="sbKey" type="password" placeholder="eyJhbGciOi…" autocomplete="off"><span class="hint">Project Settings → API → anon public key</span></div>
+      <div class="field"><label for="devName">Room name</label><input id="devName" type="text" placeholder="living-room"><span class="hint">Readings are saved and watched under this name</span></div>
+      <div class="field"><label for="ntfyTopic">ntfy topic for phone alerts</label><input id="ntfyTopic" type="text" class="mono"><span class="hint">Subscribe to this topic in the ntfy app. Anyone who knows the name can read it.</span></div>
+      <div class="field"><label for="ntfyMin">Send phone alerts from</label><select id="ntfyMin"><option value="1">Caution and up</option><option value="2">Warning and up</option><option value="3">Danger only</option></select>
+        <label class="check"><input id="ntfyDemo" type="checkbox"> Also send during the demo</label></div>
+    </div>
+    <div class="row">
+      <button id="btnCloudSave" class="btn primary" type="button">Save cloud settings</button>
+      <button id="btnTestPush" class="btn" type="button">Send test alert to phone</button>
+    </div>
+    <h4 class="sub-h">Data</h4>
     <div class="row">
       <button id="btnCopy" class="btn" type="button">Copy data as CSV</button>
       <button id="btnDl" class="btn" type="button">Download CSV</button>
@@ -327,6 +379,19 @@ footer p{margin:0 0 6px}
 </div>
 <div id="toast" role="status" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ===== Paste your values here so every browser (and phones) start set up. =====
+   Values typed into Settings on a device override these for that device. */
+const CLOUD_DEFAULTS = {
+  sbUrl: '',          // e.g. 'https://abcd1234.supabase.co'
+  sbKey: '',          // anon public key from Supabase → Project Settings → API
+  device: 'living-room',
+  ntfyTopic: '',      // e.g. 'heatwatch-team7-x8k2' (leave blank to auto-generate)
+  ntfyMin: 2,         // 1 = Caution, 2 = Warning, 3 = Danger
+  ntfyDemo: false
+};
+</script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -387,10 +452,14 @@ function timeAbove(rs, th){
 
 /* ---------- alerts ---------- */
 function cooldown(key, ms){ const n = nowD(); if (S.flags[key] == null || n - S.flags[key] > ms){ S.flags[key] = n; return true; } return false; }
-function addAlert(level, text){
-  S.alerts.unshift({ ts: nowD(), level, text });
+function addAlert(level, text, opts = {}){
+  const ts = nowD();
+  S.alerts.unshift({ ts, level, text });
   if (S.alerts.length > 200) S.alerts.pop();
-  if (!S.quiet) notify(text);
+  if (S.quiet) return;
+  notify(text);
+  if (S.mode === 'serial') queueRow('alerts', { device: C.device, ts: new Date(ts).toISOString(), level, message: text });
+  if (opts.push !== false) sendPhone(level, text);
 }
 function notify(text){
   try { if ('Notification' in window && Notification.permission === 'granted') new Notification('HeatWatch', { body: text }); } catch(e) {}
@@ -431,8 +500,12 @@ function evaluate(){
 /* ---------- readings ---------- */
 function addReading(t, h, ts){
   if (!isFinite(t) || !isFinite(h) || t < -20 || t > 60 || h < 0 || h > 100){ S.bad++; return; }
+  const prevR = last();
+  if (prevR && ts <= prevR.ts) return;          // ignore duplicates / out-of-order rows
   const wasStale = S.stale;
-  S.readings.push({ ts, t, h, f: feelsLike(t, h) });
+  const rec = { ts, t, h, f: feelsLike(t, h) };
+  S.readings.push(rec);
+  queueReading(rec);
   while (S.readings.length && ts - S.readings[0].ts > 26*HR) S.readings.shift();
   S.lastArrival = performance.now();
   if (!S.quiet){
@@ -441,7 +514,7 @@ function addReading(t, h, ts){
     blip($('liveDot'));
     if (!prev || prev.t !== t) blip($('tTemp'));
   }
-  if (wasStale){ S.stale = false; addAlert(S.level, 'Sensor readings resumed'); }
+  if (wasStale){ S.stale = false; addAlert(S.level, 'Sensor readings resumed', { push: S.level >= 2 }); }
   evaluate();
   if (!S.quiet) schedule();
 }
@@ -476,7 +549,7 @@ function resetData(){
   Object.assign(S, { arrivals:[], readings:[], level:0, warmSince:null, stale:false, acked:true, alerts:[], checkins:[], errors:0, bad:0, raw:[], flags:{}, lastArrival:0 });
 }
 function startDemo(){
-  stopSerial();
+  stopSerial(); stopWatch();
   S.mode = 'demo'; resetData();
   const base = new Date(); base.setHours(12,0,0,0);
   const end = base.getTime();
@@ -513,7 +586,7 @@ async function connectSerial(){
   }
   try { await p.open({ baudRate: +$('baud').value }); }
   catch(e){ setMsg('Could not open the port. Close the Arduino IDE Serial Monitor (only one program can use the port), then try again.'); return; }
-  stopDemo(); resetData();
+  stopDemo(); stopWatch(); resetData();
   port = p; S.mode = 'serial'; S.lastArrival = performance.now();
   setRange(2*MIN);
   setMsg(null); requestWake(); render();
@@ -564,6 +637,169 @@ function beep(){
 }
 async function requestWake(){ try { await navigator.wakeLock?.request('screen'); } catch(e) {} }
 
+/* ---------- cloud: Supabase + ntfy ---------- */
+const C = Object.assign({}, CLOUD_DEFAULTS);
+try { Object.assign(C, JSON.parse(localStorage.getItem('heatwatch-cloud') || '{}')); } catch(e) {}
+if (!C.ntfyTopic){ C.ntfyTopic = 'heatwatch-' + Math.random().toString(36).slice(2, 10); saveCloudCfg(); }
+function saveCloudCfg(){ try { localStorage.setItem('heatwatch-cloud', JSON.stringify(C)); } catch(e) {} }
+
+let sb = null, cloudErr = null, lastSaved = null, flushing = false, lastQueued = 0, channel = null;
+const Q = { readings: [], alerts: [], checkins: [] };
+
+function initCloud(){
+  sb = null; cloudErr = null;
+  if (!C.sbUrl || !C.sbKey) return;
+  if (!window.supabase || !window.supabase.createClient){ cloudErr = 'The Supabase library did not load. Check the internet connection and reload.'; return; }
+  try { sb = window.supabase.createClient(C.sbUrl.trim(), C.sbKey.trim()); }
+  catch(e){ cloudErr = 'That Supabase URL or key is not valid.'; }
+}
+function queueRow(table, row){
+  if (!sb) return;
+  Q[table].push(row);
+  if (Q[table].length > 3000) Q[table].shift();   // keep memory bounded if offline for a long time
+}
+function queueReading(r){
+  if (S.mode !== 'serial' || S.quiet || !sb) return;
+  if (r.ts - lastQueued < 5000) return;            // save one reading every 5 s
+  lastQueued = r.ts;
+  queueRow('readings', { device: C.device, ts: new Date(r.ts).toISOString(), temp_c: r.t, humidity: r.h, feels_c: Math.round(r.f*100)/100 });
+}
+async function flush(){
+  if (!sb || flushing) return;
+  if (!Q.readings.length && !Q.alerts.length && !Q.checkins.length) return;
+  flushing = true;
+  try {
+    for (const table of ['readings', 'alerts', 'checkins']){
+      const rows = Q[table]; if (!rows.length) continue;
+      const batch = rows.slice(0, 500);
+      const { error } = await sb.from(table).insert(batch);
+      if (error) throw error;
+      rows.splice(0, batch.length);
+    }
+    lastSaved = Date.now(); cloudErr = null;
+  } catch(e){
+    cloudErr = (e && e.message) ? e.message : 'Could not reach Supabase';
+  }
+  flushing = false;
+  renderCloud();
+}
+setInterval(flush, 5000);
+
+function renderCloud(){
+  const pill = $('cloudPill'), st = $('cloudStatus');
+  const waiting = Q.readings.length + Q.alerts.length + Q.checkins.length;
+  if (!C.sbUrl || !C.sbKey){ pill.className = 'pill idle'; pill.textContent = 'Off'; st.textContent = 'Not set up. Add your Supabase URL and anon key below.'; return; }
+  if (cloudErr){ pill.className = 'pill bad'; pill.textContent = 'Error'; st.textContent = cloudErr + (waiting ? ` (${waiting} waiting to save)` : ''); return; }
+  pill.className = 'pill ok'; pill.textContent = 'Connected';
+  if (S.mode === 'serial') st.textContent = lastSaved ? `Last saved ${fmtAgo(Date.now() - lastSaved)} · ${waiting} waiting` : 'Saving starts with the next reading';
+  else if (S.mode === 'watch') st.textContent = `Watching live readings for ${C.device}`;
+  else st.textContent = 'Ready. Only live Arduino readings are saved; demo data is not.';
+}
+
+async function sendPhone(level, text, force){
+  if (!C.ntfyTopic) return false;
+  if (!force){
+    if (level < +C.ntfyMin) return false;
+    if (!(S.mode === 'serial' || (S.mode === 'demo' && C.ntfyDemo))) return false;
+  }
+  try {
+    // No custom headers, so the browser sends a simple request (no CORS preflight)
+    const res = await fetch('https://ntfy.sh/', { method: 'POST', body: JSON.stringify({
+      topic: C.ntfyTopic,
+      title: `HeatWatch ${LV[level] || ''}: ${C.device}`,
+      message: text,
+      priority: level >= 3 ? 5 : level === 2 ? 4 : 3,
+      tags: level >= 3 ? ['rotating_light'] : ['thermometer']
+    }) });
+    return res.ok;
+  } catch(e){ return false; }
+}
+
+async function fetchAll(table, cols, fromIso, toIso){
+  const out = [];
+  for (let off = 0; off < 60000; off += 1000){
+    const { data, error } = await sb.from(table).select(cols).eq('device', C.device)
+      .gte('ts', fromIso).lt('ts', toIso).order('ts', { ascending: true }).range(off, off + 999);
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  return out;
+}
+
+async function startWatch(){
+  if (!sb){ setMsg('Set up cloud saving in Settings first.'); return; }
+  await stopSerial(); stopDemo(); stopWatch();
+  resetData(); S.mode = 'watch'; setRange(30*MIN); setMsg(null); render();
+  const to = new Date(Date.now() + MIN).toISOString(), from = new Date(Date.now() - 3*HR).toISOString();
+  try {
+    const [rows, cks] = await Promise.all([
+      fetchAll('readings', 'ts,temp_c,humidity', from, to),
+      fetchAll('checkins', 'ts', from, to)
+    ]);
+    S.quiet = true;
+    rows.forEach(r => addReading(r.temp_c, r.humidity, Date.parse(r.ts)));
+    S.quiet = false; S.acked = true;
+    S.checkins = cks.map(c => Date.parse(c.ts));
+    if (!rows.length) setMsg(`No readings saved for "${C.device}" in the last 3 hours. Live readings will appear as soon as the monitor laptop sends them.`);
+  } catch(e){ S.quiet = false; setMsg('Could not load recent readings: ' + (e.message || e)); }
+  channel = sb.channel('hw-' + C.device)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'readings', filter: 'device=eq.' + C.device },
+        p => { const r = p.new; addReading(r.temp_c, r.humidity, Date.parse(r.ts)); })
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'checkins', filter: 'device=eq.' + C.device },
+        p => { const t = Date.parse(p.new.ts); if (!S.checkins.some(x => Math.abs(x - t) < 2000)) { S.checkins.push(t); addAlert(S.level, 'Check-in logged by another caregiver', { push: false }); schedule(); } })
+    .subscribe(status => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setMsg('Live updates are not working. In Supabase, make sure Realtime is enabled for the readings table (see SETUP.md).');
+    });
+  S.lastArrival = performance.now();
+  render();
+}
+function stopWatch(){
+  if (channel && sb){ try { sb.removeChannel(channel); } catch(e) {} }
+  channel = null;
+  if (S.mode === 'watch') S.mode = 'idle';
+}
+
+async function loadHistory(){
+  const msg = $('histMsg'), body = $('histBody');
+  if (!sb){ msg.textContent = 'Set up cloud saving in Settings to see saved history.'; body.hidden = true; return; }
+  const d = $('histDate').value; if (!d) return;
+  const start = new Date(d + 'T00:00:00').getTime(), end = start + 24*HR;
+  msg.textContent = 'Loading…';
+  try {
+    const fi = new Date(start).toISOString(), ti = new Date(end).toISOString();
+    const [rows, al, ck] = await Promise.all([
+      fetchAll('readings', 'ts,temp_c,humidity,feels_c', fi, ti),
+      fetchAll('alerts', 'ts,level,message', fi, ti),
+      fetchAll('checkins', 'ts', fi, ti)
+    ]);
+    const rs = rows.map(r => ({ ts: Date.parse(r.ts), t: r.temp_c, h: r.humidity, f: r.feels_c ?? feelsLike(r.temp_c, r.humidity) }));
+    body.hidden = false;
+    msg.textContent = rs.length ? `${C.device}, ${new Date(start).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}` : `Nothing saved for ${C.device} on this day.`;
+    $('hN').textContent = rs.length.toLocaleString();
+    $('hAvg').textContent = rs.length ? fmt(avg(rs.map(x => x.t))) : '--';
+    $('hMM').textContent = rs.length ? conv(Math.min(...rs.map(x=>x.t))).toFixed(0) + ' / ' + conv(Math.max(...rs.map(x=>x.t))).toFixed(0) + '°' : '--';
+    $('hFeel').textContent = rs.length ? fmt(Math.max(...rs.map(x => x.f))) : '--';
+    $('hT1').textContent = rs.length ? fmtDur(timeAbove(rs, cfg.caution)) : '--';
+    $('hT3').textContent = rs.length ? fmtDur(timeAbove(rs, cfg.danger)) : '--';
+    $('hT1k').textContent = 'Time at ' + fmt(cfg.caution, 0) + ' or above';
+    $('hT3k').textContent = 'Time at ' + fmt(cfg.danger, 0) + ' or above';
+    $('hCk').textContent = ck.length;
+    renderChart($('histChart'), rs, start, 24*HR, 'No readings saved for this day');
+    $('histAlerts').innerHTML = al.length ? al.slice().reverse().map(x =>
+      `<li><time>${fmtTime(Date.parse(x.ts))}</time><span class="pill l${x.level}">${LV[x.level] || ''}</span><span class="txt">${esc(x.message || '')}</span></li>`).join('')
+      : '<li><span></span><span></span><span class="txt muted">No alerts on this day.</span></li>';
+  } catch(e){
+    msg.textContent = 'Could not load history: ' + (e.message || e) + '. Check that the tables exist (see SETUP.md).';
+    body.hidden = true;
+  }
+}
+
+function fillCloudForm(){
+  $('sbUrl').value = C.sbUrl || ''; $('sbKey').value = C.sbKey || ''; $('devName').value = C.device || '';
+  $('ntfyTopic').value = C.ntfyTopic || ''; $('ntfyMin').value = String(C.ntfyMin || 2); $('ntfyDemo').checked = !!C.ntfyDemo;
+}
+
 /* ---------- UI helpers ---------- */
 function setMsg(t){ const m = $('connMsg'); m.hidden = !t; m.textContent = t || ''; }
 let toastT;
@@ -585,7 +821,9 @@ function render(){
   const now = nowD(), r = last();
   const src = $('src');
   src.dataset.mode = S.mode;
-  src.textContent = S.mode === 'demo' ? 'Demo data (simulated heat wave)' : S.mode === 'serial' ? 'Live from Arduino' : 'Not connected';
+  src.textContent = S.mode === 'demo' ? 'Demo data (simulated heat wave)' : S.mode === 'serial' ? 'Live from Arduino' : S.mode === 'watch' ? 'Watching ' + C.device + ' from cloud' : 'Not connected';
+  $('btnWatch').hidden = !sb || S.mode === 'watch';
+  renderCloud();
   $('btnConnect').textContent = S.mode === 'serial' ? 'Disconnect' : 'Connect Arduino';
   $('btnDemo').textContent = S.mode === 'demo' ? 'Restart demo' : 'Run demo';
 
@@ -646,7 +884,7 @@ function render(){
   const pill = $('senPill');
   if (S.mode === 'idle'){ pill.className = 'pill idle'; pill.textContent = 'Idle'; }
   else if (S.stale){ pill.className = 'pill bad'; pill.textContent = 'No data'; }
-  else { pill.className = 'pill ok'; pill.textContent = S.mode === 'demo' ? 'Simulated' : 'Receiving'; }
+  else { pill.className = 'pill ok'; pill.textContent = S.mode === 'demo' ? 'Simulated' : S.mode === 'watch' ? 'Via cloud' : 'Receiving'; }
   $('senLast').textContent = S.lastArrival && r ? fmtAgo(performance.now() - S.lastArrival) : '--';
   const ar = S.arrivals;
   $('senRate').textContent = ar.length >= 3 ? 'every ' + ((ar[ar.length-1]-ar[0])/(ar.length-1)/1000).toFixed(1) + ' s' : '--';
@@ -681,28 +919,30 @@ const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','
 
 /* ---------- chart ---------- */
 function drawChart(){
-  const el = $('chart');
+  const now = nowD();
+  renderChart($('chart'), win(now - S.range, now), now - S.range, S.range, 'Waiting for the first reading');
+}
+function renderChart(el, rs, from, range, emptyText){
   const W = Math.max(280, el.clientWidth || 600);
   const H = Math.round(Math.max(230, Math.min(330, W*0.42)));
   const P = { l:40, r:16, t:12, b:26 };
-  const now = nowD(), from = now - S.range;
-  const rs = win(from, now);
-  if (!rs.length){ el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><text class="c-empty" x="${W/2}" y="${H/2}" text-anchor="middle">Waiting for the first reading</text></svg>`; return; }
+  const now = from + range;
+  if (!rs.length){ el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><text class="c-empty" x="${W/2}" y="${H/2}" text-anchor="middle">${esc(emptyText)}</text></svg>`; return; }
 
   // downsample into time buckets
   const n = Math.max(20, Math.floor((W - P.l - P.r)/2));
-  const bms = S.range / n, buckets = new Map();
+  const bms = range / n, buckets = new Map();
   for (const r of rs){ const k = Math.floor((r.ts - from)/bms); const b = buckets.get(k) || {k, t:0, f:0, c:0}; b.t+=r.t; b.f+=r.f; b.c++; buckets.set(k,b); }
   const pts = [...buckets.values()].sort((a,b)=>a.k-b.k).map(b => ({ k:b.k, ts: from + (b.k+0.5)*bms, t:b.t/b.c, f:b.f/b.c }));
 
   let lo = Math.min(...pts.map(p=>p.t)), hi = Math.max(...pts.map(p=>Math.max(p.t,p.f)));
-  const live = S.range <= 5*MIN;
+  const live = range <= 5*MIN;
   if (live){ lo -= 1.5; hi += 1.5; }   // zoom in so small changes are visible
   else { lo = Math.min(lo - 1, cfg.caution - 4); hi = Math.max(hi + 1, cfg.danger + 2); }
   const Lo = conv(lo), Hi = conv(hi);
   const step = (Hi - Lo) > 24 ? 5 : (Hi - Lo) > 12 ? 2 : (Hi - Lo) > 4 ? 1 : 0.5;
   const yMin = Math.floor(Lo/step)*step, yMax = Math.ceil(Hi/step)*step;
-  const X = ts => P.l + (ts - from)/S.range*(W - P.l - P.r);
+  const X = ts => P.l + (ts - from)/range*(W - P.l - P.r);
   const Y = c => P.t + (yMax - conv(c))/(yMax - yMin)*(H - P.t - P.b);
   const Yd = v => P.t + (yMax - v)/(yMax - yMin)*(H - P.t - P.b);
   const x0 = P.l, x1 = W - P.r, yb = H - P.b;
@@ -719,7 +959,7 @@ function drawChart(){
     s += `<line class="c-grid" x1="${x0}" x2="${x1}" y1="${y}" y2="${y}"/><text class="c-axis" x="${x0-6}" y="${y+4}" text-anchor="end">${v}°</text>`;
   }
   // x ticks
-  const tick = live ? 30e3 : S.range <= 30*MIN ? 5*MIN : S.range <= 3*HR ? 30*MIN : 4*HR;
+  const tick = live ? 30e3 : range <= 30*MIN ? 5*MIN : range <= 3*HR ? 30*MIN : 4*HR;
   const tLabel = t => live ? new Date(t).toLocaleTimeString([], {hour:'numeric', minute:'2-digit', second:'2-digit'}) : fmtTime(t);
   const tz = new Date(from).getTimezoneOffset()*MIN;
   for (let t = Math.ceil((from - tz)/tick)*tick + tz; t <= now; t += tick){
@@ -755,9 +995,10 @@ function drawChart(){
 setInterval(() => {
   if (S.mode !== 'idle' && S.lastArrival){
     const age = (performance.now() - S.lastArrival)/1000;
-    if (!S.stale && age > cfg.stale){
+    const limit = S.mode === 'watch' ? Math.max(cfg.stale, 45) : cfg.stale;
+    if (!S.stale && age > limit){
       S.stale = true; S.acked = false;
-      addAlert(2, `No data from the sensor for ${cfg.stale} seconds`);
+      addAlert(2, S.mode === 'watch' ? `No new readings from ${C.device} for ${limit} seconds. The monitor may be offline.` : `No data from the sensor for ${limit} seconds`);
       beep();
     }
   }
@@ -777,7 +1018,10 @@ $('btnSound').onclick = () => {
   render();
 };
 $('btnAck').onclick = () => { S.acked = true; render(); };
-$('btnCheck').onclick = () => { S.checkins.push(nowD()); addAlert(S.level, 'Caregiver check-in logged'); S.flags.ckOver = null; toast('Check-in logged at ' + fmtTime(nowD())); render(); };
+$('btnCheck').onclick = () => {
+  S.checkins.push(nowD());
+  if (S.mode === 'serial' || S.mode === 'watch') { queueRow('checkins', { device: C.device, ts: new Date(nowD()).toISOString(), note: S.mode === 'watch' ? 'from watcher' : 'from monitor' }); flush(); }
+  addAlert(S.level, 'Caregiver check-in logged', { push: false }); S.flags.ckOver = null; toast('Check-in logged at ' + fmtTime(nowD())); render(); };
 function setRange(ms){
   S.range = ms;
   document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', +x.dataset.range === ms));
@@ -826,6 +1070,26 @@ function bindClear(){ $('btnClear').onclick = () => {
   $('clrNo').onclick = restoreClear;
 }; }
 window.addEventListener('resize', () => schedule());
+
+// cloud controls
+$('btnWatch').onclick = () => startWatch();
+$('btnHist').onclick = () => loadHistory();
+$('btnCloudSave').onclick = () => {
+  C.sbUrl = $('sbUrl').value.trim(); C.sbKey = $('sbKey').value.trim();
+  C.device = ($('devName').value.trim() || 'living-room').toLowerCase().replace(/\s+/g, '-');
+  C.ntfyTopic = $('ntfyTopic').value.trim(); C.ntfyMin = +$('ntfyMin').value; C.ntfyDemo = $('ntfyDemo').checked;
+  saveCloudCfg(); initCloud(); fillCloudForm(); render();
+  toast(sb ? 'Cloud settings saved' : cloudErr || 'Saved. Add a URL and key to turn on cloud saving.');
+};
+$('btnTestPush').onclick = async () => {
+  C.ntfyTopic = $('ntfyTopic').value.trim();
+  if (!C.ntfyTopic){ toast('Enter an ntfy topic first.'); return; }
+  const ok = await sendPhone(3, 'Test alert. If you can read this, phone alerts are working.', true);
+  toast(ok ? 'Test alert sent to topic ' + C.ntfyTopic : 'Could not reach ntfy.sh. Check the internet connection.');
+};
+(() => { const d = new Date(); $('histDate').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+fillCloudForm();
+initCloud();
 
 startDemo();
 })();
